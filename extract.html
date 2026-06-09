@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Add Bill — JCP&L Dashboard</title>
+<style>
+  :root {
+    --bg:#f0f4f8; --surface:#fff; --surface2:#edf2f7; --text:#1a202c;
+    --text2:#4a5568; --text3:#718096; --border:#e2e8f0;
+    --accent:#3182ce; --green:#38a169; --red:#e53e3e;
+    --shadow:0 2px 10px rgba(0,0,0,0.08);
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:'Segoe UI',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+  header { background:linear-gradient(135deg,#1a365d,#2b6cb0); color:white; padding:22px 32px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; }
+  header h1 { font-size:1.3rem; font-weight:700; }
+  .hbtn { padding:7px 15px; border-radius:8px; border:1px solid rgba(255,255,255,.35); background:rgba(255,255,255,.15); color:white; cursor:pointer; font-size:.8rem; font-weight:600; text-decoration:none; display:inline-block; }
+  .hbtn:hover { background:rgba(255,255,255,.28); }
+  .container { max-width:760px; margin:0 auto; padding:32px 18px; }
+  .card { background:var(--surface); border-radius:14px; padding:28px; box-shadow:var(--shadow); margin-bottom:22px; }
+  .card h2 { font-size:1rem; font-weight:700; margin-bottom:6px; color:var(--text); }
+  .card p { font-size:.83rem; color:var(--text3); margin-bottom:18px; line-height:1.6; }
+  label { display:block; font-size:.78rem; font-weight:600; color:var(--text3); margin-bottom:6px; text-transform:uppercase; letter-spacing:.04em; }
+  input[type="text"], input[type="password"] {
+    width:100%; padding:10px 13px; border-radius:8px; border:1px solid var(--border);
+    background:var(--surface2); color:var(--text); font-size:.85rem; margin-bottom:16px;
+  }
+  input[type="text"]:focus, input[type="password"]:focus { outline:2px solid var(--accent); border-color:var(--accent); }
+  .drop-zone {
+    border:2px dashed var(--border); border-radius:12px; padding:40px 24px;
+    text-align:center; cursor:pointer; transition:border-color .2s, background .2s;
+    background:var(--surface2); margin-bottom:18px;
+  }
+  .drop-zone:hover, .drop-zone.drag-over { border-color:var(--accent); background:#ebf8ff; }
+  .drop-zone input[type="file"] { display:none; }
+  .drop-zone-icon { font-size:2.2rem; margin-bottom:10px; }
+  .drop-zone p { font-size:.85rem; color:var(--text3); margin:0; }
+  .drop-zone .file-name { font-size:.82rem; color:var(--accent); font-weight:600; margin-top:8px; }
+  .btn { padding:11px 22px; border-radius:9px; border:none; cursor:pointer; font-size:.88rem; font-weight:700; color:white; background:var(--accent); width:100%; transition:opacity .15s; }
+  .btn:hover { opacity:.88; }
+  .btn:disabled { opacity:.45; cursor:not-allowed; }
+  .btn.green { background:var(--green); }
+  .status { border-radius:10px; padding:14px 18px; font-size:.84rem; margin-bottom:16px; display:none; line-height:1.6; }
+  .status.info { background:#ebf8ff; color:#2b6cb0; border:1px solid #bee3f8; display:block; }
+  .status.error { background:#fff5f5; color:#c53030; border:1px solid #fed7d7; display:block; }
+  .status.success { background:#f0fff4; color:#276749; border:1px solid #c6f6d5; display:block; }
+  .result-box { background:var(--surface2); border-radius:10px; padding:16px; margin-top:16px; display:none; }
+  .result-box h3 { font-size:.85rem; font-weight:700; margin-bottom:12px; color:var(--text2); }
+  .field-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px; }
+  .field { background:var(--surface); border-radius:8px; padding:12px; }
+  .field-label { font-size:.68rem; color:var(--text3); text-transform:uppercase; font-weight:600; }
+  .field-value { font-size:1rem; font-weight:700; margin-top:3px; }
+  .json-out { background:#1a202c; color:#68d391; border-radius:8px; padding:14px; font-family:monospace; font-size:.78rem; overflow-x:auto; white-space:pre; margin-bottom:14px; }
+  .steps { counter-reset:step; }
+  .step { display:flex; gap:14px; align-items:flex-start; margin-bottom:14px; font-size:.83rem; color:var(--text2); line-height:1.6; }
+  .step-num { background:var(--accent); color:white; border-radius:50%; width:24px; height:24px; display:flex; align-items:center; justify-content:center; font-size:.72rem; font-weight:700; flex-shrink:0; margin-top:1px; }
+  code { background:var(--surface2); padding:2px 6px; border-radius:4px; font-family:monospace; font-size:.82em; }
+  .tip { background:#fffaf0; border:1px solid #f6e05e; border-radius:8px; padding:12px 15px; font-size:.8rem; color:#744210; margin-top:14px; line-height:1.6; }
+  .spinner { display:inline-block; width:16px; height:16px; border:2px solid rgba(255,255,255,.4); border-top-color:white; border-radius:50%; animation:spin .7s linear infinite; vertical-align:middle; margin-right:7px; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  .key-hint { font-size:.72rem; color:var(--text3); margin-top:-10px; margin-bottom:14px; }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>📄 Add New Bill</h1>
+    <p style="opacity:.75;font-size:.8rem;margin-top:3px;">Upload a JCP&L PDF to extract billing data</p>
+  </div>
+  <a href="index.html" class="hbtn">← Back to Dashboard</a>
+</header>
+
+<div class="container">
+
+  <!-- Step 1: API Key -->
+  <div class="card">
+    <h2>🔑 Anthropic API Key</h2>
+    <p>Required to read your PDF. Your key is never stored — it stays in your browser tab only and is cleared when you close this page.</p>
+    <label for="apiKey">API Key</label>
+    <input type="password" id="apiKey" placeholder="sk-ant-api03-..." autocomplete="off">
+    <div class="key-hint">Get your key at <a href="https://console.anthropic.com/keys" target="_blank" style="color:var(--accent)">console.anthropic.com/keys</a></div>
+  </div>
+
+  <!-- Step 2: Upload -->
+  <div class="card">
+    <h2>📂 Upload JCP&L Bill (PDF)</h2>
+    <p>Drop your monthly electricity bill PDF below. Claude will extract the billing period, KWH, cost, days, and rate plan automatically.</p>
+
+    <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+      <input type="file" id="fileInput" accept=".pdf" onchange="handleFile(this.files[0])">
+      <div class="drop-zone-icon">📄</div>
+      <p>Click to choose a PDF, or drag and drop here</p>
+      <div class="file-name" id="fileName"></div>
+    </div>
+
+    <div class="status" id="status"></div>
+
+    <button class="btn" id="extractBtn" onclick="extractData()" disabled>
+      Extract Billing Data
+    </button>
+  </div>
+
+  <!-- Result -->
+  <div class="card" id="resultCard" style="display:none;">
+    <h2>✅ Extracted Data</h2>
+    <p>Review the fields below before adding to your dashboard. You can edit any value directly.</p>
+
+    <div class="field-grid" id="fieldGrid"></div>
+
+    <h3 style="font-size:.82rem;font-weight:700;color:var(--text3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em;">JSON to add to data.json</h3>
+    <div class="json-out" id="jsonOut"></div>
+
+    <div class="steps">
+      <div style="font-size:.82rem;font-weight:700;color:var(--text2);margin-bottom:10px;">How to add this to your dashboard:</div>
+      <div class="step"><div class="step-num">1</div><div>Copy the JSON above (click the button below)</div></div>
+      <div class="step"><div class="step-num">2</div><div>Open <code>data.json</code> in your repo</div></div>
+      <div class="step"><div class="step-num">3</div><div>Add the copied entry to the end of the array (before the closing <code>]</code>), with a comma after the previous entry</div></div>
+      <div class="step"><div class="step-num">4</div><div>Commit and push — your GitHub Pages dashboard updates automatically</div></div>
+    </div>
+
+    <button class="btn green" style="margin-top:16px;" onclick="copyJSON()">📋 Copy JSON Entry</button>
+
+    <div class="tip">
+      💡 <strong>Temp field:</strong> Claude will try to find average temperature if printed on the bill. If not, it defaults to <code>null</code> — you can fill it in manually in data.json using the average temperature for that month in your area.
+    </div>
+  </div>
+
+</div>
+
+<script>
+let selectedFile = null;
+let extractedEntry = null;
+
+// Drag and drop
+const dropZone = document.getElementById('dropZone');
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('drag-over');
+  const f = e.dataTransfer.files[0];
+  if (f && f.type === 'application/pdf') handleFile(f);
+  else showStatus('Please drop a PDF file.', 'error');
+});
+
+function handleFile(file) {
+  if (!file) return;
+  selectedFile = file;
+  document.getElementById('fileName').textContent = '✓ ' + file.name;
+  document.getElementById('extractBtn').disabled = false;
+  hideStatus();
+}
+
+function showStatus(msg, type) {
+  const el = document.getElementById('status');
+  el.textContent = msg;
+  el.className = 'status ' + type;
+}
+
+function hideStatus() {
+  document.getElementById('status').className = 'status';
+}
+
+async function extractData() {
+  const apiKey = document.getElementById('apiKey').value.trim();
+  if (!apiKey) { showStatus('Please enter your Anthropic API key.', 'error'); return; }
+  if (!selectedFile) { showStatus('Please select a PDF file.', 'error'); return; }
+
+  const btn = document.getElementById('extractBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Reading PDF with Claude…';
+  showStatus('Uploading and analyzing your bill… this takes about 10–20 seconds.', 'info');
+  document.getElementById('resultCard').style.display = 'none';
+
+  try {
+    // Convert PDF to base64
+    const base64 = await fileToBase64(selectedFile);
+
+    const prompt = `You are extracting data from a JCP&L (Jersey Central Power & Light) electricity bill PDF.
+
+Extract ONLY these fields and return a single JSON object — no markdown, no explanation, just raw JSON:
+
+{
+  "label": "Mon YY",           // e.g. "Jun 25" for June 2025 — use the END month of the billing period
+  "period": "Mon DD–Mon DD, YYYY",  // full period string e.g. "Jun 05–Jul 06, 2025"
+  "days": 30,                  // number of days in billing cycle (integer)
+  "kwh": 1414,                 // total KWH used (integer)
+  "cost": 282.62,              // total electricity cost in dollars (number, 2 decimal places) — use only the electricity/supply+delivery charges, NOT any budget billing adjustment
+  "temp": 72,                  // average temperature in °F for the period if shown on the bill, otherwise null
+  "rate": "Standard",          // either "Standard" or "Time-of-Day"
+  "onPeak": 437,               // on-peak KWH if Time-of-Day rate, otherwise null
+  "offPeak": 1487,             // off-peak KWH if Time-of-Day rate, otherwise null
+  "onPct": 22.7,               // on-peak percentage if Time-of-Day, otherwise null
+  "offPct": 77.3               // off-peak percentage if Time-of-Day, otherwise null
+}
+
+Rules:
+- label uses 2-digit year (e.g. "Jun 25" not "Jun 2025")
+- days must be an integer
+- kwh must be an integer (no decimals)
+- cost must be a number with exactly 2 decimal places
+- If this is a Time-of-Day rate plan, fill in onPeak, offPeak, onPct, offPct — otherwise set all four to null
+- onPct + offPct should sum to 100
+- temp: look for "average temperature" or similar on the bill; if not found use null
+- Return ONLY the JSON object, nothing else`;
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{
+          role: 'user',
+          content: [
+            {
+              type: 'document',
+              source: { type: 'base64', media_type: 'application/pdf', data: base64 }
+            },
+            { type: 'text', text: prompt }
+          ]
+        }]
+      })
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error?.message || `API error ${response.status}`);
+    }
+
+    const data = await response.json();
+    const text = data.content.filter(b => b.type === 'text').map(b => b.text).join('');
+
+    // Parse JSON — strip any accidental markdown
+    const clean = text.replace(/```json|```/g, '').trim();
+    const entry = JSON.parse(clean);
+
+    extractedEntry = entry;
+    showResult(entry);
+    showStatus('✅ Extraction complete! Review the data below.', 'success');
+
+  } catch (e) {
+    showStatus('Error: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = 'Extract Billing Data';
+  }
+}
+
+function showResult(entry) {
+  document.getElementById('resultCard').style.display = 'block';
+
+  const fields = [
+    { label: 'Label', key: 'label', value: entry.label },
+    { label: 'Period', key: 'period', value: entry.period },
+    { label: 'Days', key: 'days', value: entry.days },
+    { label: 'KWH Used', key: 'kwh', value: entry.kwh },
+    { label: 'Total Cost', key: 'cost', value: '$' + Number(entry.cost).toFixed(2) },
+    { label: 'Avg Temp °F', key: 'temp', value: entry.temp !== null ? entry.temp + '°F' : 'Not found' },
+    { label: 'Rate Plan', key: 'rate', value: entry.rate },
+    { label: 'On-Peak KWH', key: 'onPeak', value: entry.onPeak !== null ? entry.onPeak + ' (' + entry.onPct + '%)' : 'N/A' },
+    { label: 'Off-Peak KWH', key: 'offPeak', value: entry.offPeak !== null ? entry.offPeak + ' (' + entry.offPct + '%)' : 'N/A' },
+  ];
+
+  document.getElementById('fieldGrid').innerHTML = fields.map(f => `
+    <div class="field">
+      <div class="field-label">${f.label}</div>
+      <div class="field-value">${f.value}</div>
+    </div>
+  `).join('');
+
+  document.getElementById('jsonOut').textContent = JSON.stringify(entry, null, 2);
+  document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function copyJSON() {
+  if (!extractedEntry) return;
+  const text = JSON.stringify(extractedEntry, null, 2);
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = event.target;
+    btn.textContent = '✓ Copied!';
+    setTimeout(() => btn.textContent = '📋 Copy JSON Entry', 2000);
+  });
+}
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result.split(',')[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+</script>
+</body>
+</html>
