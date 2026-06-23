@@ -3,7 +3,7 @@
   {"label":"Jul 25","period":"Jul 07–Aug 04, 2025","days":29,"kwh":1055,"cost":193.83,"temp":81,"rate":"Standard","onPeak":null,"offPeak":null,"onPct":null,"offPct":null},
   {"label":"Aug 25","period":"Aug 05–Sep 04, 2025","days":31,"kwh":1545,"cost":305.48,"temp":74,"rate":"Standard","onPeak":null,"offPeak":null,"onPct":null,"offPct":null},
   {"label":"Sep 25","period":"Sep 05–Oct 05, 2025","days":31,"kwh":1924,"cost":322.06,"temp":71,"rate":"Time-of-Day","onPeak":437,"offPeak":1487,"onPct":22.7,"offPct":77.3},
-  {"label":"Oct 25","period":"Oct 06–Nov 05, 2025","days":31,"kwh":1602,"cost":301.67,"temp":58,"rate":"Time-of-Day","onPeak":219,"offPeak":1383,"onPct":13.7,"offPct":86.4},
+  {"label":"Oct 25","period":"Oct 06–Nov 05, 2025","days":31,"kwh":1602,"cost":301.67,"temp":58,"rate":"Time-of-Day","onPeak":219,"offPeak":1383,"onPct":13.7,"offPct":86.3},
   {"label":"Nov 25","period":"Nov 06–Dec 04, 2025","days":29,"kwh":1521,"cost":283.62,"temp":45,"rate":"Time-of-Day","onPeak":198,"offPeak":1323,"onPct":13.0,"offPct":87.0},
   {"label":"Dec 25","period":"Dec 05–Jan 05, 2026","days":32,"kwh":1954,"cost":342.02,"temp":33,"rate":"Time-of-Day","onPeak":293,"offPeak":1661,"onPct":15.0,"offPct":85.0},
   {"label":"Jan 26","period":"Jan 06–Feb 03, 2026","days":29,"kwh":2237,"cost":391.36,"temp":30,"rate":"Time-of-Day","onPeak":361,"offPeak":1876,"onPct":16.1,"offPct":83.9},

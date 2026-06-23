@@ -141,7 +141,7 @@ Rules:
 - rate = "Standard" or "Time-of-Day"
 - If Time-of-Day: fill in onPeak, offPeak, onPct, offPct — otherwise set all four to null
 - temp = average temp °F if shown on the bill, otherwise null</div>
-    <button class="btn green" style="margin-top:14px;" onclick="copyPrompt()">📋 Copy Prompt</button>
+    <button class="btn green" style="margin-top:14px;" onclick="copyPrompt(this)">📋 Copy Prompt</button>
 
     <div class="steps" style="margin-top:20px;">
       <div style="font-size:.82rem;font-weight:700;color:var(--text2);margin-bottom:10px;">Then update the dashboard:</div>
@@ -244,10 +244,9 @@ document.addEventListener("keydown", e => {
 });
 // ─────────────────────────────────────────────────────────
 
-function copyPrompt() {
+function copyPrompt(btn) {
   const text = document.getElementById('claudePrompt').textContent;
   navigator.clipboard.writeText(text).then(() => {
-    const btn = event.target;
     btn.textContent = '✓ Copied!';
     setTimeout(() => btn.textContent = '📋 Copy Prompt', 2000);
   });

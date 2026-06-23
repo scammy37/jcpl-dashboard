@@ -333,6 +333,7 @@ function renderPeakSummary() {
 }
 
 function renderCards() {
+  if (!fd.length) return;
   const totalKwh = fd.reduce((s,d)=>s+d.kwh,0);
   const totalCost = fd.reduce((s,d)=>s+d.cost,0);
   const peak = fd.reduce((a,b)=>a.kwh>b.kwh?a:b);
@@ -350,6 +351,7 @@ function renderCards() {
 }
 
 function renderBarSvg(svgId, values, baseColor, prefix, dec) {
+  const dark = document.body.classList.contains('dark');
   const svg = document.getElementById(svgId);
   const W = svg.parentElement.clientWidth - 40;
   const H = 210, PAD_T=22, LABEL_H=30;
@@ -368,14 +370,15 @@ function renderBarSvg(svgId, values, baseColor, prefix, dec) {
     const cx = (x+barW/2).toFixed(1);
     html += `<g style="cursor:pointer" onclick="showDetail(${origIdx})">
       <rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${bh.toFixed(1)}" fill="${col}" rx="3" opacity="${isActive?1:0.85}"><title>${fd[i].label}: ${lbl}</title></rect>
-      <text x="${cx}" y="${(y-4).toFixed(1)}" text-anchor="middle" font-size="9" font-weight="600" fill="#4a5568">${lbl}</text>
-      <text x="${cx}" y="${(H-LABEL_H+14).toFixed(1)}" text-anchor="middle" font-size="9" fill="#718096">${fd[i].label}</text>
+      <text x="${cx}" y="${(y-4).toFixed(1)}" text-anchor="middle" font-size="9" font-weight="600" fill="${dark?'#a0aec0':'#4a5568'}">${lbl}</text>
+      <text x="${cx}" y="${(H-LABEL_H+14).toFixed(1)}" text-anchor="middle" font-size="9" fill="${dark?'#718096':'#718096'}">${fd[i].label}</text>
     </g>`;
   });
   svg.innerHTML = html;
 }
 
 function renderLineSvg() {
+  const dark = document.body.classList.contains('dark');
   const svg = document.getElementById('lineSvg');
   const W = svg.parentElement.clientWidth - 40;
   const H=240, PL=10, PR=150, PT=24, PB=30;
@@ -397,36 +400,41 @@ function renderLineSvg() {
     bars+=`<rect x="${bx.toFixed(1)}" y="${by.toFixed(1)}" width="${barW.toFixed(1)}" height="${bh.toFixed(1)}" fill="${col}" rx="3" opacity="${isActive?1:0.82}" style="cursor:pointer" onclick="showDetail(${oi})"><title>${d.label}: ${d.kwh.toLocaleString()} KWH</title></rect>`;
     const kText=d.kwh.toLocaleString(), kW=kText.length*5.2+6;
     dataLabels+=`<rect x="${(+cx-kW/2).toFixed(1)}" y="${(by-13).toFixed(1)}" width="${kW.toFixed(1)}" height="12" rx="2" fill="white" fill-opacity="0.85"/>`;
-    dataLabels+=`<text x="${cx}" y="${(by-3).toFixed(1)}" text-anchor="middle" font-size="8" font-weight="700" fill="#2b6cb0">${kText}</text>`;
+    dataLabels+=`<text x="${cx}" y="${(by-3).toFixed(1)}" text-anchor="middle" font-size="8" font-weight="700" fill="${dark?'#63b3ed':'#2b6cb0'}">${kText}</text>`;
     const tx=+cx, ty=yTemp(d.temp);
     tempPath+=(i===0?'M':'L')+`${tx.toFixed(1)},${ty.toFixed(1)} `;
-    tempDots+=`<circle cx="${tx.toFixed(1)}" cy="${ty.toFixed(1)}" r="4" fill="#e53e3e" stroke="white" stroke-width="1.5"><title>${d.label}: ${d.temp}°F</title></circle>`;
+    tempDots+=`<circle cx="${tx.toFixed(1)}" cy="${ty.toFixed(1)}" r="4" fill="#e53e3e" stroke="${dark?'#1a1f2e':'white'}" stroke-width="1.5"><title>${d.label}: ${d.temp}°F</title></circle>`;
     const tText=d.temp+'°', tW=tText.length*5.2+6, tLabelY=ty>PT+18?ty-9:ty+17;
-    dataLabels+=`<rect x="${(tx-tW/2).toFixed(1)}" y="${(tLabelY-10).toFixed(1)}" width="${tW.toFixed(1)}" height="12" rx="2" fill="white" fill-opacity="0.85"/>`;
-    dataLabels+=`<text x="${tx.toFixed(1)}" y="${tLabelY.toFixed(1)}" text-anchor="middle" font-size="8" font-weight="700" fill="#c53030">${tText}</text>`;
+    dataLabels+=`<rect x="${(tx-tW/2).toFixed(1)}" y="${(tLabelY-10).toFixed(1)}" width="${tW.toFixed(1)}" height="12" rx="2" fill="${dark?'#1a1f2e':'white'}" fill-opacity="0.85"/>`;
+    dataLabels+=`<text x="${tx.toFixed(1)}" y="${tLabelY.toFixed(1)}" text-anchor="middle" font-size="8" font-weight="700" fill="#e53e3e">${tText}</text>`;
     lbls+=`<text x="${cx}" y="${H-6}" text-anchor="middle" font-size="9" fill="#718096">${d.label}</text>`;
   });
   const lx=PL+plotW+10;
+  const legBg=dark?'#1a1f2e':'white', legBorder=dark?'#2d3748':'#e2e8f0', legText=dark?'#a0aec0':'#4a5568';
   svg.innerHTML=`${grid}
-    <line x1="${PL}" y1="${PT}" x2="${PL}" y2="${PT+plotH}" stroke="#cbd5e0" stroke-width="1.5"/>
-    <line x1="${PL}" y1="${PT+plotH}" x2="${PL+plotW}" y2="${PT+plotH}" stroke="#cbd5e0" stroke-width="1.5"/>
+    <line x1="${PL}" y1="${PT}" x2="${PL}" y2="${PT+plotH}" stroke="${dark?'#2d3748':'#cbd5e0'}" stroke-width="1.5"/>
+    <line x1="${PL}" y1="${PT+plotH}" x2="${PL+plotW}" y2="${PT+plotH}" stroke="${dark?'#2d3748':'#cbd5e0'}" stroke-width="1.5"/>
     ${bars}<path d="${tempPath}" fill="none" stroke="#e53e3e" stroke-width="2.2" stroke-linejoin="round" stroke-dasharray="5,3"/>
     ${tempDots}${dataLabels}${lbls}
-    <rect x="${lx}" y="${PT+8}" width="138" height="52" rx="6" fill="white" stroke="#e2e8f0" fill-opacity=".95"/>
+    <rect x="${lx}" y="${PT+8}" width="138" height="52" rx="6" fill="${legBg}" stroke="${legBorder}" fill-opacity=".95"/>
     <rect x="${lx+10}" y="${PT+21}" width="14" height="10" rx="2" fill="#63b3ed"/>
-    <text x="${lx+30}" y="${PT+30}" font-size="11" fill="#4a5568">KWH Usage</text>
+    <text x="${lx+30}" y="${PT+30}" font-size="11" fill="${legText}">KWH Usage</text>
     <line x1="${lx+10}" y1="${PT+44}" x2="${lx+24}" y2="${PT+44}" stroke="#e53e3e" stroke-width="2" stroke-dasharray="4,2"/>
     <circle cx="${lx+17}" cy="${PT+44}" r="3" fill="#e53e3e"/>
-    <text x="${lx+30}" y="${PT+48}" font-size="11" fill="#4a5568">Avg Temp °F</text>`;
+    <text x="${lx+30}" y="${PT+48}" font-size="11" fill="${legText}">Avg Temp °F</text>`;
 }
 
 function renderStackedBar() {
+  const dark = document.body.classList.contains('dark');
   const svg = document.getElementById('stackedSvg');
   const W = svg.parentElement.clientWidth - 40;
   const H=220, PAD_T=24, LABEL_H=30, barH=H-PAD_T-LABEL_H;
-  const n=fd.length, max=Math.max(...fd.map(d=>d.kwh));
+  const n=fd.length;
+  if(!n){svg.innerHTML='';return;}
+  const max=Math.max(...fd.map(d=>d.kwh));
   const gapR=0.22, stepW=(W-16)/n, barW=stepW*(1-gapR);
   svg.setAttribute('width',W); svg.setAttribute('height',H);
+  const valCol=dark?'#a0aec0':'#4a5568', lblCol='#718096';
   let html='';
   fd.forEach((d,i)=>{
     const x=8+i*stepW+stepW*gapR/2, cx=(x+barW/2).toFixed(1);
@@ -437,15 +445,15 @@ function renderStackedBar() {
       html+=`<g style="cursor:pointer" onclick="showDetail(${origIdx})">
         <rect x="${x.toFixed(1)}" y="${offY.toFixed(1)}" width="${barW.toFixed(1)}" height="${offH.toFixed(1)}" fill="#38a169" opacity="${opacity}"><title>${d.label} Off-Peak: ${d.offPeak.toLocaleString()} KWH (${d.offPct}%)</title></rect>
         <rect x="${x.toFixed(1)}" y="${onY.toFixed(1)}" width="${barW.toFixed(1)}" height="${onH.toFixed(1)}" fill="#e53e3e" rx="3" opacity="${opacity}"><title>${d.label} On-Peak: ${d.onPeak.toLocaleString()} KWH (${d.onPct}%)</title></rect>
-        <text x="${cx}" y="${(onY-4).toFixed(1)}" text-anchor="middle" font-size="8.5" font-weight="700" fill="#4a5568">${d.kwh.toLocaleString()}</text>
-        <text x="${cx}" y="${(H-LABEL_H+14).toFixed(1)}" text-anchor="middle" font-size="9" fill="#718096">${d.label}</text>
+        <text x="${cx}" y="${(onY-4).toFixed(1)}" text-anchor="middle" font-size="8.5" font-weight="700" fill="${valCol}">${d.kwh.toLocaleString()}</text>
+        <text x="${cx}" y="${(H-LABEL_H+14).toFixed(1)}" text-anchor="middle" font-size="9" fill="${lblCol}">${d.label}</text>
       </g>`;
     } else {
       const bh=(d.kwh/max)*barH, y=PAD_T+barH-bh;
       html+=`<g style="cursor:pointer" onclick="showDetail(${origIdx})">
         <rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${bh.toFixed(1)}" fill="#63b3ed" rx="3" opacity="${opacity}"><title>${d.label}: ${d.kwh.toLocaleString()} KWH (Standard Rate)</title></rect>
-        <text x="${cx}" y="${(y-4).toFixed(1)}" text-anchor="middle" font-size="8.5" font-weight="700" fill="#4a5568">${d.kwh.toLocaleString()}</text>
-        <text x="${cx}" y="${(H-LABEL_H+14).toFixed(1)}" text-anchor="middle" font-size="9" fill="#718096">${d.label}</text>
+        <text x="${cx}" y="${(y-4).toFixed(1)}" text-anchor="middle" font-size="8.5" font-weight="700" fill="${valCol}">${d.kwh.toLocaleString()}</text>
+        <text x="${cx}" y="${(H-LABEL_H+14).toFixed(1)}" text-anchor="middle" font-size="9" fill="${lblCol}">${d.label}</text>
       </g>`;
     }
   });

@@ -101,13 +101,17 @@ def main():
         print("Skipped — run 'git add data.json && git commit && git push' when ready.")
         return
 
-    subprocess.run(["git", "add", "data.json"], cwd=SCRIPT_DIR, check=True)
-    subprocess.run(
-        ["git", "commit", "-m", f"Add {entry['label']} bill"],
-        cwd=SCRIPT_DIR, check=True
-    )
-    subprocess.run(["git", "push"], cwd=SCRIPT_DIR, check=True)
-    print("✓ Pushed to GitHub — refresh the dashboard.")
+    try:
+        subprocess.run(["git", "add", "data.json"], cwd=SCRIPT_DIR, check=True)
+        subprocess.run(
+            ["git", "commit", "-m", f"Add {entry['label']} bill"],
+            cwd=SCRIPT_DIR, check=True
+        )
+        subprocess.run(["git", "push"], cwd=SCRIPT_DIR, check=True)
+        print("✓ Pushed to GitHub — refresh the dashboard.")
+    except subprocess.CalledProcessError as e:
+        print(f"\nGit error: {e}")
+        print("data.json was updated locally. Run 'git add data.json && git commit && git push' manually.")
 
 
 if __name__ == "__main__":
