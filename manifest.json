@@ -1,0 +1,17 @@
+{
+  "name": "JCP&L Electricity Dashboard",
+  "short_name": "JCPL Dashboard",
+  "description": "Personal electricity usage and billing tracker",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f0f4f8",
+  "theme_color": "#1a365d",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

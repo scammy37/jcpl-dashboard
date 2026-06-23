@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>JCP&L Electricity Dashboard</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1a365d">
+<link rel="apple-touch-icon" href="icon.svg">
 <style>
   :root {
     --bg:#f0f4f8; --surface:#fff; --surface2:#edf2f7; --text:#1a202c;
@@ -546,6 +549,10 @@ function exportCSV() {
 
 loadData();
 window.addEventListener('resize', renderAll);
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js');
+}
 </script>
 </body>
 </html>
