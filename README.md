@@ -1,75 +1,60 @@
 # ⚡ JCP&L Electricity Dashboard
 
-Personal electricity usage dashboard for account 100 082 853 803 — 6 Faesch Ct, Rockaway NJ 07866.
+Personal electricity usage tracker — charts, filters, and billing history for JCP&L accounts.
 
 ## Files
 
 | File | Purpose |
 |------|---------|
 | `index.html` | Main dashboard — charts, table, filters |
-| `extract.html` | Upload a PDF bill → Claude extracts the data |
-| `data.json` | All billing records — edit this to add/change data |
-
----
-
-## Setup: GitHub Pages (one-time)
-
-1. **Create a new GitHub repo** (e.g. `jcpl-dashboard`) — set it to **Public**
-2. **Upload all three files** (`index.html`, `extract.html`, `data.json`) to the repo root
-3. Go to **Settings → Pages**
-4. Under *Source*, select **Deploy from a branch → main → / (root)**
-5. Click **Save**
-
-GitHub will give you a URL like:
-```
-https://yourusername.github.io/jcpl-dashboard/
-```
-
-That URL works on **any PC or phone** — just bookmark it.
+| `extract.html` | Instructions for adding a new bill (PIN protected) |
+| `data.json` | All billing records — the data source |
+| `add_bill.py` | Script to add a new bill entry and push automatically |
 
 ---
 
 ## Adding a new bill
 
-### Option A — PDF Upload (recommended)
-1. Go to your dashboard URL and click **"Add Bill (PDF)"** in the header
-2. Enter your [Anthropic API key](https://console.anthropic.com/keys) (only needed once per session — never stored)
-3. Upload your JCP&L PDF bill
-4. Claude extracts the data — review it, then click **Copy JSON Entry**
-5. Open `data.json` in GitHub, paste the new entry at the end of the array (add a comma after the previous entry), and commit
+The **Add Bill** page (`extract.html`) is PIN protected. Click the link in the dashboard header to open it — it explains all three options below.
 
-### Option B — Manual edit
-Open `data.json` and add a new entry following this format:
+### Option A — Claude chat (recommended)
+1. Go to [claude.ai](https://claude.ai), attach your JCP&L PDF bill
+2. Use the prompt on the Add Bill page to extract the data as JSON
+3. Open `data.json`, add the entry at the end of the array (comma after the previous entry), save
+4. `git add data.json && git commit -m "Add [Month] bill" && git push`
 
-```json
-{
-  "label": "Jun 26",
-  "period": "Jun 04–Jul 05, 2026",
-  "days": 31,
-  "kwh": 1550,
-  "cost": 295.40,
-  "temp": 76,
-  "rate": "Time-of-Day",
-  "onPeak": 290,
-  "offPeak": 1260,
-  "onPct": 18.7,
-  "offPct": 81.3
-}
+### Option B — GitHub web editor
+1. Go to your repo on github.com and open `data.json`
+2. Click the ✏️ pencil icon to edit
+3. Add the new entry at the end of the array
+4. Click **Commit changes** — GitHub Pages redeploys automatically
+
+### Option C — Script (fastest)
+Get the JSON from Claude (Option A), then run:
 ```
-
-For Standard rate months, set `onPeak`, `offPeak`, `onPct`, `offPct` all to `null`.
+python add_bill.py
+```
+Paste the JSON when prompted, press Enter twice, then Y to commit and push. Done.
 
 ---
+
+## data.json entry format
+
+```json
+{"label":"Jun 26","period":"Jun 04–Jul 03, 2026","days":30,"kwh":1717,"cost":312.30,"temp":66,"rate":"Time-of-Day","onPeak":331,"offPeak":1386,"onPct":19.3,"offPct":80.7}
+```
+
+For Standard rate months set `onPeak`, `offPeak`, `onPct`, `offPct` all to `null`.
 
 ## Field reference
 
 | Field | Type | Notes |
 |-------|------|-------|
-| `label` | string | Short label: `"Jun 26"` |
-| `period` | string | Full billing period text |
+| `label` | string | End month, 2-digit year: `"Jun 26"` |
+| `period` | string | Full billing period: `"Jun 04–Jul 03, 2026"` |
 | `days` | integer | Days in billing cycle |
 | `kwh` | integer | Total KWH consumed |
-| `cost` | number | Total charges (2 decimal places) |
+| `cost` | number | Electricity charges only, 2 decimal places |
 | `temp` | number or null | Average temp °F for the period |
 | `rate` | string | `"Standard"` or `"Time-of-Day"` |
 | `onPeak` | integer or null | On-peak KWH (Time-of-Day only) |
@@ -79,14 +64,13 @@ For Standard rate months, set `onPeak`, `offPeak`, `onPct`, `offPct` all to `nul
 
 ---
 
-## Running locally (optional)
+## Running locally
 
 The dashboard uses `fetch('data.json')` which requires a local server (browsers block file:// fetches).
 
 ```bash
-# Python (simplest)
 cd jcpl-dashboard
-python3 -m http.server 8080
+python -m http.server 8080
 # Open http://localhost:8080
 ```
 
