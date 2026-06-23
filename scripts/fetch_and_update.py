@@ -34,26 +34,88 @@ async def fetch_pdf() -> Path:
         # Step 1: Login
         print("-> Loading login page...")
         await page.goto("https://www.firstenergycorp.com/log_in.html", wait_until="networkidle")
+        await asyncio.sleep(2)  # allow JS-rendered form to finish mounting
         await page.screenshot(path=str(SCREENSHOT_DIR / "01_login.png"))
 
-        print("-> Filling credentials...")
-        await page.fill(
-            "input[type='email'], #username, input[name='username'], input[name='userid']",
-            username,
-        )
-        await page.fill(
-            "input[type='password'], #password, input[name='password']",
-            password,
-        )
-        await page.screenshot(path=str(SCREENSHOT_DIR / "02_filled.png"))
+        try:
+            # Dismiss cookie/consent banner if present
+            for consent_sel in [
+                "button:has-text('Accept')",
+                "button:has-text('Agree')",
+                "button:has-text('OK')",
+                "#onetrust-accept-btn-handler",
+                ".cookie-accept",
+            ]:
+                try:
+                    await page.click(consent_sel, timeout=2000)
+                    print(f"   Dismissed consent banner via '{consent_sel}'")
+                    break
+                except PlaywrightTimeoutError:
+                    continue
 
-        print("-> Submitting login...")
-        await page.click(
-            "button[type='submit'], input[type='submit'], .login-button, .btn-login, button.btn-primary"
-        )
-        await page.wait_for_load_state("networkidle")
-        await page.screenshot(path=str(SCREENSHOT_DIR / "03_after_login.png"))
-        print(f"   URL after login: {page.url}")
+            # Fill username — try each selector individually
+            print("-> Filling username...")
+            username_selectors = [
+                "input[type='email']",
+                "#username",
+                "input[name='username']",
+                "input[name='userid']",
+                "input[autocomplete='username']",
+                "input[type='text'][name*='user' i]",
+                "input[id*='email' i]",
+                "input[name*='email' i]",
+                "input[id*='login' i]",
+                "input[name*='login' i]",
+            ]
+            filled_username = False
+            for sel in username_selectors:
+                try:
+                    await page.fill(sel, username, timeout=3000)
+                    print(f"   Username filled via '{sel}'")
+                    filled_username = True
+                    break
+                except PlaywrightTimeoutError:
+                    continue
+            if not filled_username:
+                raise RuntimeError("Could not find username input field — no selector matched.")
+
+            # Fill password
+            print("-> Filling password...")
+            password_selectors = [
+                "input[type='password']",
+                "#password",
+                "input[name='password']",
+                "input[name='passwd']",
+                "input[autocomplete='current-password']",
+            ]
+            filled_password = False
+            for sel in password_selectors:
+                try:
+                    await page.fill(sel, password, timeout=3000)
+                    print(f"   Password filled via '{sel}'")
+                    filled_password = True
+                    break
+                except PlaywrightTimeoutError:
+                    continue
+            if not filled_password:
+                raise RuntimeError("Could not find password input field — no selector matched.")
+
+            await page.screenshot(path=str(SCREENSHOT_DIR / "02_filled.png"))
+
+            print("-> Submitting login...")
+            await page.click(
+                "button[type='submit'], input[type='submit'], .login-button, .btn-login, button.btn-primary"
+            )
+            await page.wait_for_load_state("networkidle")
+            await page.screenshot(path=str(SCREENSHOT_DIR / "03_after_login.png"))
+            print(f"   URL after login: {page.url}")
+
+        except Exception:
+            html = await page.content()
+            (ROOT / "debug_page.html").write_text(html, encoding="utf-8")
+            await page.screenshot(path=str(ROOT / "debug_page.png"))
+            await browser.close()
+            raise
 
         # Step 2: Navigate to billing
         print("-> Navigating to billing & payments...")
