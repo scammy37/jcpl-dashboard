@@ -73,16 +73,7 @@
 
 <div class="container">
 
-  <!-- Step 1: API Key -->
-  <div class="card">
-    <h2>🔑 Anthropic API Key</h2>
-    <p>Required to read your PDF. Your key is never stored — it stays in your browser tab only and is cleared when you close this page.</p>
-    <label for="apiKey">API Key</label>
-    <input type="password" id="apiKey" placeholder="sk-ant-api03-..." autocomplete="off">
-    <div class="key-hint">Get your key at <a href="https://console.anthropic.com/settings/keys" target="_blank" style="color:var(--accent)">console.anthropic.com/settings/keys</a></div>
-  </div>
-
-  <!-- Step 2: Upload -->
+  <!-- Upload -->
   <div class="card">
     <h2>📂 Upload JCP&L Bill (PDF)</h2>
     <p>Drop your monthly electricity bill PDF below. Claude will extract the billing period, KWH, cost, days, and rate plan automatically.</p>
@@ -163,8 +154,6 @@ function hideStatus() {
 }
 
 async function extractData() {
-  const apiKey = document.getElementById('apiKey').value.trim();
-  if (!apiKey) { showStatus('Please enter your Anthropic API key.', 'error'); return; }
   if (!selectedFile) { showStatus('Please select a PDF file.', 'error'); return; }
 
   const btn = document.getElementById('extractBtn');
@@ -209,7 +198,6 @@ Rules:
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': apiKey,
         'anthropic-version': '2023-06-01',
         'anthropic-dangerous-direct-browser-access': 'true'
       },
