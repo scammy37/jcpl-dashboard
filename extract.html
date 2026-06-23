@@ -13,6 +13,46 @@
   }
   * { box-sizing:border-box; margin:0; padding:0; }
   body { font-family:'Segoe UI',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+  #pinLock {
+    position:fixed; inset:0; z-index:9999;
+    background:linear-gradient(135deg,#1a365d,#2b6cb0);
+    display:flex; align-items:center; justify-content:center;
+    transition:opacity .35s;
+  }
+  #pinLock.hide { opacity:0; pointer-events:none; }
+  .pin-box {
+    background:rgba(255,255,255,.1); backdrop-filter:blur(8px);
+    border:1px solid rgba(255,255,255,.2); border-radius:20px;
+    padding:40px 36px; text-align:center; width:300px;
+  }
+  .pin-box h2 { color:white; font-size:1.1rem; font-weight:700; margin-bottom:4px; }
+  .pin-box p  { color:rgba(255,255,255,.7); font-size:.8rem; margin-bottom:28px; }
+  .pin-dots { display:flex; justify-content:center; gap:14px; margin-bottom:28px; }
+  .pin-dot {
+    width:14px; height:14px; border-radius:50%;
+    border:2px solid rgba(255,255,255,.5); background:transparent;
+    transition:background .15s, border-color .15s;
+  }
+  .pin-dot.filled { background:white; border-color:white; }
+  .pin-pad { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+  .pin-key {
+    background:rgba(255,255,255,.15); border:none; border-radius:12px;
+    color:white; font-size:1.2rem; font-weight:600; padding:16px 0;
+    cursor:pointer; transition:background .12s;
+  }
+  .pin-key:hover  { background:rgba(255,255,255,.28); }
+  .pin-key:active { background:rgba(255,255,255,.4); }
+  .pin-key.del    { font-size:.9rem; }
+  .pin-key.empty  { background:transparent; cursor:default; pointer-events:none; }
+  .pin-error { color:#fc8181; font-size:.8rem; margin-top:16px; min-height:1.2em; }
+  @keyframes shake {
+    0%,100%{transform:translateX(0)}
+    20%{transform:translateX(-8px)}
+    40%{transform:translateX(8px)}
+    60%{transform:translateX(-6px)}
+    80%{transform:translateX(6px)}
+  }
+  .pin-box.shake { animation:shake .4s ease; }
   header { background:linear-gradient(135deg,#1a365d,#2b6cb0); color:white; padding:22px 32px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; }
   header h1 { font-size:1.3rem; font-weight:700; }
   .hbtn { padding:7px 15px; border-radius:8px; border:1px solid rgba(255,255,255,.35); background:rgba(255,255,255,.15); color:white; cursor:pointer; font-size:.8rem; font-weight:600; text-decoration:none; display:inline-block; }
@@ -34,6 +74,35 @@
 </style>
 </head>
 <body>
+
+<div id="pinLock">
+  <div class="pin-box" id="pinBox">
+    <h2>🔒 Add Bill</h2>
+    <p>Enter your PIN to continue</p>
+    <div class="pin-dots" id="pinDots">
+      <div class="pin-dot" id="d0"></div>
+      <div class="pin-dot" id="d1"></div>
+      <div class="pin-dot" id="d2"></div>
+      <div class="pin-dot" id="d3"></div>
+    </div>
+    <div class="pin-pad">
+      <button class="pin-key" onclick="pinPress('1')">1</button>
+      <button class="pin-key" onclick="pinPress('2')">2</button>
+      <button class="pin-key" onclick="pinPress('3')">3</button>
+      <button class="pin-key" onclick="pinPress('4')">4</button>
+      <button class="pin-key" onclick="pinPress('5')">5</button>
+      <button class="pin-key" onclick="pinPress('6')">6</button>
+      <button class="pin-key" onclick="pinPress('7')">7</button>
+      <button class="pin-key" onclick="pinPress('8')">8</button>
+      <button class="pin-key" onclick="pinPress('9')">9</button>
+      <button class="pin-key empty"></button>
+      <button class="pin-key" onclick="pinPress('0')">0</button>
+      <button class="pin-key del" onclick="pinDel()">⌫</button>
+    </div>
+    <div class="pin-error" id="pinError"></div>
+  </div>
+</div>
+
 <header>
   <div>
     <h1>📄 Add New Bill</h1>
@@ -129,6 +198,52 @@ Rules:
 </div>
 
 <script>
+// ── PIN lock ─────────────────────────────────────────────
+const CORRECT_PIN = "9067";
+let pinEntry = "";
+
+function pinPress(digit) {
+  if (pinEntry.length >= CORRECT_PIN.length) return;
+  pinEntry += digit;
+  updateDots();
+  if (pinEntry.length === CORRECT_PIN.length) checkPin();
+}
+
+function pinDel() {
+  pinEntry = pinEntry.slice(0, -1);
+  document.getElementById("pinError").textContent = "";
+  updateDots();
+}
+
+function updateDots() {
+  for (let i = 0; i < CORRECT_PIN.length; i++) {
+    document.getElementById("d" + i).classList.toggle("filled", i < pinEntry.length);
+  }
+}
+
+function checkPin() {
+  if (pinEntry === CORRECT_PIN) {
+    const lock = document.getElementById("pinLock");
+    lock.classList.add("hide");
+    lock.addEventListener("transitionend", () => lock.remove(), { once: true });
+  } else {
+    const box = document.getElementById("pinBox");
+    box.classList.add("shake");
+    box.addEventListener("animationend", () => box.classList.remove("shake"), { once: true });
+    document.getElementById("pinError").textContent = "Incorrect PIN — try again";
+    pinEntry = "";
+    updateDots();
+  }
+}
+
+document.addEventListener("keydown", e => {
+  if (document.getElementById("pinLock")) {
+    if (e.key >= "0" && e.key <= "9") pinPress(e.key);
+    else if (e.key === "Backspace") pinDel();
+  }
+});
+// ─────────────────────────────────────────────────────────
+
 function copyPrompt() {
   const text = document.getElementById('claudePrompt').textContent;
   navigator.clipboard.writeText(text).then(() => {
