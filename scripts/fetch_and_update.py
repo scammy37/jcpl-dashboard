@@ -60,10 +60,13 @@ async def fetch_pdf() -> Path:
                 "#username",
                 "input[name='username']",
                 "input[name='userid']",
+                "input[name='user']",
+                "input[type='text']",
                 "input[autocomplete='username']",
-                "input[type='text'][name*='user' i]",
                 "input[id*='email' i]",
                 "input[name*='email' i]",
+                "input[id*='user' i]",
+                "input[name*='user' i]",
                 "input[id*='login' i]",
                 "input[name*='login' i]",
             ]
@@ -86,7 +89,10 @@ async def fetch_pdf() -> Path:
                 "#password",
                 "input[name='password']",
                 "input[name='passwd']",
+                "input[name='pwd']",
                 "input[autocomplete='current-password']",
+                "input[id*='password' i]",
+                "input[name*='password' i]",
             ]
             filled_password = False
             for sel in password_selectors:
