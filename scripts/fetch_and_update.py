@@ -207,6 +207,11 @@ def parse_pdf(pdf_path: Path) -> dict:
     with pdfplumber.open(pdf_path) as pdf:
         text = "\n".join(p.extract_text() or "" for p in pdf.pages)
 
+    # Write full text for debugging
+    debug_path = ROOT / "debug_pdf_text.txt"
+    debug_path.write_text(text, encoding="utf-8")
+    print(f"--- PDF text (first 800 chars) ---\n{text[:800]}\n---")
+
     m = re.search(
         r"Billing Period:\s+(\w+ \d{2}) to (\w+ \d{2}, \d{4}) for (\d+) days", text
     )
