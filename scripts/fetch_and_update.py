@@ -27,9 +27,27 @@ async def fetch_pdf() -> Path:
     password = os.environ["JCPL_PASSWORD"]
 
     async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True)
-        context = await browser.new_context(accept_downloads=True)
+        browser = await p.chromium.launch(
+            headless=True,
+            args=[
+                "--disable-blink-features=AutomationControlled",
+                "--no-sandbox",
+                "--disable-dev-shm-usage",
+            ],
+        )
+        context = await browser.new_context(
+            accept_downloads=True,
+            user_agent=(
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/124.0.0.0 Safari/537.36"
+            ),
+        )
         page = await context.new_page()
+        # Remove the navigator.webdriver flag that headless Chrome exposes
+        await page.add_init_script(
+            "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
+        )
 
         # Step 1: Login
         print("-> Loading login page...")
@@ -46,14 +64,19 @@ async def fetch_pdf() -> Path:
             await page.screenshot(path=str(SCREENSHOT_DIR / "02_b2c_page.png"))
             print(f"   Redirected to: {page.url}")
 
-            # Azure AD B2C standard field IDs
+            # Azure AD B2C standard field IDs — use type() to simulate real keystrokes
             print("-> Filling username on B2C page...")
-            await page.fill("#signInName", username, timeout=15000)
-            await page.fill("#password", password, timeout=10000)
+            await page.click("#signInName", timeout=15000)
+            await page.type("#signInName", username, delay=60)
+            await asyncio.sleep(0.5)
+            await page.click("#password")
+            await page.type("#password", password, delay=60)
+            await asyncio.sleep(0.5)
             await page.screenshot(path=str(SCREENSHOT_DIR / "03_b2c_filled.png"))
 
             print("-> Submitting B2C login...")
             await page.click("#next, button[type='submit']", timeout=10000)
+            await asyncio.sleep(2)
             await page.wait_for_load_state("networkidle")
             await page.screenshot(path=str(SCREENSHOT_DIR / "04_after_login.png"))
             print(f"   URL after login: {page.url}")
