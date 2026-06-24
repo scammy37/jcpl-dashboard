@@ -476,7 +476,7 @@ function renderTable() {
     const tr=document.createElement('tr');
     tr.className=oi===activeIdx?'active-row':'';
     tr.innerHTML=`
-      <td>${d.period}</td><td>${d.days}</td>
+      <td>${d.period.replace('–',' – ')}</td><td>${d.days}</td>
       <td class="editable-cell" data-idx="${oi}" data-field="kwh" ondblclick="makeEdit(this)"><strong>${d.kwh.toLocaleString()}</strong></td>
       <td>${ks}</td>
       <td class="editable-cell" data-idx="${oi}" data-field="cost" ondblclick="makeEdit(this)"><strong>$${d.cost.toFixed(2)}</strong></td>
