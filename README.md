@@ -38,7 +38,7 @@ A workflow runs daily from the 7th–12th of each month and:
 | `JCPL_COOKIES` | Cookie header string copied from Chrome DevTools after logging in |
 | `GMAIL_APP_PASSWORD` | Gmail app password for the notification email |
 
-Refresh `JCPL_COOKIES` monthly: log in to firstenergycorp.com in Chrome, open DevTools → Network, find any request, right-click → Copy as cURL, extract the `Cookie:` header value, and update the secret.
+Refresh `JCPL_COOKIES` only when needed: the workflow emails you a failure message ("Session cookies have expired") when they stop working. When that happens, log in to firstenergycorp.com in Chrome, open DevTools → Network, find any request, right-click → Copy as cURL, extract the `Cookie:` header value, and update the secret. Cookies typically last several months.
 
 You can also trigger the workflow manually from the **Actions** tab → **Fetch JCP&L Bill** → **Run workflow**.
 
