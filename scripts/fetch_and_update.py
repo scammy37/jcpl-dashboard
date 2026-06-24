@@ -224,7 +224,11 @@ def parse_pdf(pdf_path: Path) -> dict:
 
     end_m  = re.match(r"(\w+) \d+, (\d{4})", end_str)
     start_m = re.match(r"(\w+)", start_str)
-    label  = f"{start_m.group(1)} {end_m.group(2)[2:]}"   # start month + 2-digit year
+    end_year = int(end_m.group(2))
+    start_month = start_m.group(1)
+    # Dec→Jan bills: start year is one less than end year
+    start_year = end_year - 1 if start_month == "Dec" and end_m.group(1) == "Jan" else end_year
+    label  = f"{start_month} {str(start_year)[2:]}"
     period = f"{start_str}–{end_str}"
 
     m   = re.search(r"KWH used\s+([\d,]+)", text)
