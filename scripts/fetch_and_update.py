@@ -11,6 +11,7 @@ import re
 import json
 from pathlib import Path
 from playwright.async_api import async_playwright, TimeoutError as PlaywrightTimeoutError
+from playwright_stealth import stealth_async
 import pdfplumber
 
 ROOT = Path(__file__).parent.parent
@@ -44,10 +45,7 @@ async def fetch_pdf() -> Path:
             ),
         )
         page = await context.new_page()
-        # Remove the navigator.webdriver flag that headless Chrome exposes
-        await page.add_init_script(
-            "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
-        )
+        await stealth_async(page)
 
         # Step 1: Login
         print("-> Loading login page...")

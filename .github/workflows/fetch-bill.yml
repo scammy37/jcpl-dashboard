@@ -19,7 +19,7 @@ jobs:
           python-version: '3.11'
 
       - name: Install Python dependencies
-        run: pip install playwright pdfplumber
+        run: pip install playwright pdfplumber playwright-stealth
 
       - name: Install Playwright browsers
         run: playwright install chromium --with-deps
