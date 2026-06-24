@@ -13,46 +13,6 @@
   }
   * { box-sizing:border-box; margin:0; padding:0; }
   body { font-family:'Segoe UI',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
-  #pinLock {
-    position:fixed; inset:0; z-index:9999;
-    background:linear-gradient(135deg,#1a365d,#2b6cb0);
-    display:flex; align-items:center; justify-content:center;
-    transition:opacity .35s;
-  }
-  #pinLock.hide { opacity:0; pointer-events:none; }
-  .pin-box {
-    background:rgba(255,255,255,.1); backdrop-filter:blur(8px);
-    border:1px solid rgba(255,255,255,.2); border-radius:20px;
-    padding:40px 36px; text-align:center; width:300px;
-  }
-  .pin-box h2 { color:white; font-size:1.1rem; font-weight:700; margin-bottom:4px; }
-  .pin-box p  { color:rgba(255,255,255,.7); font-size:.8rem; margin-bottom:28px; }
-  .pin-dots { display:flex; justify-content:center; gap:14px; margin-bottom:28px; }
-  .pin-dot {
-    width:14px; height:14px; border-radius:50%;
-    border:2px solid rgba(255,255,255,.5); background:transparent;
-    transition:background .15s, border-color .15s;
-  }
-  .pin-dot.filled { background:white; border-color:white; }
-  .pin-pad { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
-  .pin-key {
-    background:rgba(255,255,255,.15); border:none; border-radius:12px;
-    color:white; font-size:1.2rem; font-weight:600; padding:16px 0;
-    cursor:pointer; transition:background .12s;
-  }
-  .pin-key:hover  { background:rgba(255,255,255,.28); }
-  .pin-key:active { background:rgba(255,255,255,.4); }
-  .pin-key.del    { font-size:.9rem; }
-  .pin-key.empty  { background:transparent; cursor:default; pointer-events:none; }
-  .pin-error { color:#fc8181; font-size:.8rem; margin-top:16px; min-height:1.2em; }
-  @keyframes shake {
-    0%,100%{transform:translateX(0)}
-    20%{transform:translateX(-8px)}
-    40%{transform:translateX(8px)}
-    60%{transform:translateX(-6px)}
-    80%{transform:translateX(6px)}
-  }
-  .pin-box.shake { animation:shake .4s ease; }
   header { background:linear-gradient(135deg,#1a365d,#2b6cb0); color:white; padding:22px 32px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; }
   header h1 { font-size:1.3rem; font-weight:700; }
   .hbtn { padding:7px 15px; border-radius:8px; border:1px solid rgba(255,255,255,.35); background:rgba(255,255,255,.15); color:white; cursor:pointer; font-size:.8rem; font-weight:600; text-decoration:none; display:inline-block; }
@@ -61,7 +21,6 @@
   .card { background:var(--surface); border-radius:14px; padding:28px; box-shadow:var(--shadow); margin-bottom:22px; }
   .card h2 { font-size:1rem; font-weight:700; margin-bottom:6px; color:var(--text); }
   .card p { font-size:.83rem; color:var(--text3); margin-bottom:18px; line-height:1.6; }
-  label { display:block; font-size:.78rem; font-weight:600; color:var(--text3); margin-bottom:6px; text-transform:uppercase; letter-spacing:.04em; }
   .btn { padding:11px 22px; border-radius:9px; border:none; cursor:pointer; font-size:.88rem; font-weight:700; color:white; background:var(--accent); width:100%; transition:opacity .15s; }
   .btn:hover { opacity:.88; }
   .btn.green { background:var(--green); }
@@ -71,52 +30,91 @@
   .step-num { background:var(--accent); color:white; border-radius:50%; width:24px; height:24px; display:flex; align-items:center; justify-content:center; font-size:.72rem; font-weight:700; flex-shrink:0; margin-top:1px; }
   code { background:var(--surface2); padding:2px 6px; border-radius:4px; font-family:monospace; font-size:.82em; }
   .tip { background:#fffaf0; border:1px solid #f6e05e; border-radius:8px; padding:12px 15px; font-size:.8rem; color:#744210; margin-top:14px; line-height:1.6; }
+  .auto-badge { display:inline-block; padding:2px 8px; border-radius:20px; background:#c6f6d5; color:#276749; font-size:.7rem; font-weight:700; margin-left:8px; vertical-align:middle; }
 </style>
 </head>
 <body>
 
-<div id="pinLock">
-  <div class="pin-box" id="pinBox">
-    <h2>🔒 Add Bill</h2>
-    <p>Enter your PIN to continue</p>
-    <div class="pin-dots" id="pinDots">
-      <div class="pin-dot" id="d0"></div>
-      <div class="pin-dot" id="d1"></div>
-      <div class="pin-dot" id="d2"></div>
-      <div class="pin-dot" id="d3"></div>
-    </div>
-    <div class="pin-pad">
-      <button class="pin-key" onclick="pinPress('1')">1</button>
-      <button class="pin-key" onclick="pinPress('2')">2</button>
-      <button class="pin-key" onclick="pinPress('3')">3</button>
-      <button class="pin-key" onclick="pinPress('4')">4</button>
-      <button class="pin-key" onclick="pinPress('5')">5</button>
-      <button class="pin-key" onclick="pinPress('6')">6</button>
-      <button class="pin-key" onclick="pinPress('7')">7</button>
-      <button class="pin-key" onclick="pinPress('8')">8</button>
-      <button class="pin-key" onclick="pinPress('9')">9</button>
-      <button class="pin-key empty"></button>
-      <button class="pin-key" onclick="pinPress('0')">0</button>
-      <button class="pin-key del" onclick="pinDel()">⌫</button>
-    </div>
-    <div class="pin-error" id="pinError"></div>
-  </div>
-</div>
-
 <header>
   <div>
     <h1>📄 Add New Bill</h1>
-    <p style="opacity:.75;font-size:.8rem;margin-top:3px;">Upload a JCP&L PDF to extract billing data</p>
+    <p style="opacity:.75;font-size:.8rem;margin-top:3px;">Four options — auto-fetch runs automatically every month</p>
   </div>
   <a href="index.html" class="hbtn">← Back to Dashboard</a>
 </header>
 
 <div class="container">
 
-  <!-- Option A: Claude -->
+  <!-- First time setup -->
+  <details style="margin-bottom:22px;">
+    <summary style="cursor:pointer; background:var(--surface); border-radius:14px; padding:18px 24px; box-shadow:var(--shadow); font-size:.95rem; font-weight:700; color:var(--text); list-style:none; display:flex; align-items:center; gap:10px; border-left:4px solid var(--accent);">
+      <span>💻 First time on a new computer?</span>
+      <span style="margin-left:auto; font-size:.8rem; font-weight:400; color:var(--text3);">Click to expand setup instructions</span>
+    </summary>
+    <div style="background:var(--surface); border-radius:0 0 14px 14px; padding:24px 28px; box-shadow:var(--shadow); border-top:1px solid var(--border); margin-top:-6px;">
+
+      <p style="font-size:.83rem;color:var(--text3);margin-bottom:20px;line-height:1.6;">
+        Options A, B, and D work from any browser with no setup. Only Option C (the script) requires the repo cloned locally with Python installed. Follow these steps once per machine.
+      </p>
+
+      <div style="font-size:.82rem;font-weight:700;color:var(--text2);margin-bottom:12px;">Step 1 — Install Git (if not already installed)</div>
+      <div class="steps" style="margin-bottom:20px;">
+        <div class="step"><div class="step-num">1</div><div>Go to <strong>git-scm.com/download/win</strong> and download Git for Windows</div></div>
+        <div class="step"><div class="step-num">2</div><div>Run the installer — default options are fine</div></div>
+        <div class="step"><div class="step-num">3</div><div>Verify: open PowerShell and run <code>git --version</code> — should print a version number</div></div>
+      </div>
+
+      <div style="font-size:.82rem;font-weight:700;color:var(--text2);margin-bottom:12px;">Step 2 — Install Python (if not already installed)</div>
+      <div class="steps" style="margin-bottom:20px;">
+        <div class="step"><div class="step-num">1</div><div>Go to <strong>python.org/downloads</strong> and download the latest Python 3.x installer</div></div>
+        <div class="step"><div class="step-num">2</div><div>Run the installer — <strong>check "Add Python to PATH"</strong> before clicking Install</div></div>
+        <div class="step"><div class="step-num">3</div><div>Verify: open PowerShell and run <code>python --version</code> — should print a version number</div></div>
+      </div>
+
+      <div style="font-size:.82rem;font-weight:700;color:var(--text2);margin-bottom:12px;">Step 3 — Clone the repo</div>
+      <div class="steps" style="margin-bottom:20px;">
+        <div class="step"><div class="step-num">1</div><div>Open PowerShell and navigate to where you want the folder:<br><code>cd C:\Claude</code> (or wherever you prefer)</div></div>
+        <div class="step"><div class="step-num">2</div><div>Clone the repo:<br><code>git clone https://github.com/scammy37/jcpl-dashboard.git</code></div></div>
+        <div class="step"><div class="step-num">3</div><div>Enter the folder:<br><code>cd jcpl-dashboard</code></div></div>
+      </div>
+
+      <div style="font-size:.82rem;font-weight:700;color:var(--text2);margin-bottom:12px;">Step 4 — Configure Git identity (first time only)</div>
+      <div class="steps" style="margin-bottom:20px;">
+        <div class="step"><div class="step-num">1</div><div>Run:<br>
+          <code>git config --global user.name "Michael Zagame"</code><br>
+          <code>git config --global user.email "michael.zagame@gmail.com"</code>
+        </div></div>
+        <div class="step"><div class="step-num">2</div><div>When you first push, GitHub will ask you to log in — use your GitHub credentials or a personal access token</div></div>
+      </div>
+
+      <div style="font-size:.82rem;font-weight:700;color:var(--text2);margin-bottom:12px;">Step 5 — Test it</div>
+      <div class="steps">
+        <div class="step"><div class="step-num">1</div><div>From inside the <code>jcpl-dashboard</code> folder, run:<br><code>python serve.py</code></div></div>
+        <div class="step"><div class="step-num">2</div><div>Open <strong>http://localhost:8080</strong> — the dashboard should load with your live data</div></div>
+        <div class="step"><div class="step-num">3</div><div>You're ready to use Option C</div></div>
+      </div>
+
+      <div class="tip" style="margin-top:16px;">💡 <strong>Work PC note:</strong> some corporate networks block GitHub or require a VPN. If <code>git clone</code> fails, try connecting via VPN first or use Options A, B, or D which only need a browser.</div>
+    </div>
+  </details>
+
+  <!-- Option A: Auto-fetch -->
+  <div class="card" style="border-left:4px solid var(--green);">
+    <h2>🤖 Option A — Auto-Fetch <span class="auto-badge">Automatic</span></h2>
+    <p>A GitHub Actions workflow runs automatically from the 7th–12th of each month. It logs in to firstenergycorp.com using your saved browser cookies, downloads the latest bill PDF, parses it, and adds the entry to <code>data.json</code> — no action needed from you.</p>
+    <div class="steps">
+      <div style="font-size:.82rem;font-weight:700;color:var(--text2);margin-bottom:10px;">You'll receive an email at michael.zagame@gmail.com with one of these results:</div>
+      <div class="step"><div class="step-num" style="background:var(--green);">✓</div><div><strong>New bill added</strong> — entry was parsed and pushed to the dashboard automatically</div></div>
+      <div class="step"><div class="step-num" style="background:var(--red);">!</div><div><strong>Session cookies expired</strong> — log in to firstenergycorp.com in Chrome, open DevTools → Network, right-click any request → Copy as cURL, extract the <code>Cookie:</code> header, and update the <code>JCPL_COOKIES</code> secret at <strong>github.com/scammy37/jcpl-dashboard/settings/secrets/actions</strong></div></div>
+      <div class="step"><div class="step-num" style="background:var(--red);">!</div><div><strong>Any other failure</strong> — check the Actions run log and fall back to Option B, C, or D below</div></div>
+    </div>
+    <div class="tip">💡 You can also trigger the workflow manually: go to <strong>github.com/scammy37/jcpl-dashboard/actions</strong> → <strong>Fetch JCP&L Bill</strong> → <strong>Run workflow</strong>.</div>
+  </div>
+
+  <!-- Option B: Claude -->
   <div class="card">
-    <h2>💬 Option A — Use Claude (Recommended)</h2>
-    <p>Open a Claude conversation, attach your JCP&amp;L bill PDF, and paste this prompt:</p>
+    <h2>💬 Option B — Use Claude <span class="auto-badge" style="background:#bee3f8;color:#2b6cb0;">Any device</span></h2>
+    <p>Works on your phone, tablet, or any computer. Go to <a href="https://claude.ai" target="_blank" style="color:var(--accent);">claude.ai</a>, attach your JCP&amp;L bill PDF, and paste this prompt:</p>
     <div class="json-out" id="claudePrompt" style="color:#e2e8f0;font-size:.8rem;white-space:pre-wrap;">Extract the billing data from this JCP&amp;L electricity bill and return a single JSON object in this exact format — no markdown, no explanation:
 
 {
@@ -144,43 +142,40 @@ Rules:
     <button class="btn green" style="margin-top:14px;" onclick="copyPrompt(this)">📋 Copy Prompt</button>
 
     <div class="steps" style="margin-top:20px;">
-      <div style="font-size:.82rem;font-weight:700;color:var(--text2);margin-bottom:10px;">Then update the dashboard:</div>
+      <div style="font-size:.82rem;font-weight:700;color:var(--text2);margin-bottom:10px;">Then commit it — pick whichever fits where you are:</div>
       <div class="step"><div class="step-num">1</div><div>Copy the JSON entry Claude returns</div></div>
-      <div class="step"><div class="step-num">2</div><div>Open <code>data.json</code> in VS Code or any text editor</div></div>
-      <div class="step"><div class="step-num">3</div><div>Add a comma after the last <code>}</code> on the final entry, then paste the new entry on a new line before the closing <code>]</code></div></div>
-      <div class="step"><div class="step-num">4</div><div>Save, then run: <code>git add data.json &amp;&amp; git commit -m "Add [Month] bill" &amp;&amp; git push</code></div></div>
-      <div class="step"><div class="step-num">5</div><div>Dashboard updates immediately — refresh the page</div></div>
+      <div class="step"><div class="step-num">2</div><div>
+        <strong>From any device (phone, tablet, work PC):</strong> go to <a href="https://github.com/scammy37/jcpl-dashboard/blob/main/data.json" target="_blank" style="color:var(--accent);">github.com/scammy37/jcpl-dashboard → data.json</a>, click ✏️, paste the entry, click <strong>Commit changes</strong><br><br>
+        <strong>From your home PC:</strong> open <code>C:\Claude\jcpl-dashboard\data.json</code>, paste the entry, save, then run <code>git add data.json &amp;&amp; git commit -m "Add [Month] bill" &amp;&amp; git push</code>
+      </div></div>
+      <div class="step"><div class="step-num">3</div><div>Dashboard updates within ~1 minute — reload the page</div></div>
     </div>
   </div>
 
-  <!-- Option B: GitHub -->
+  <!-- Option C: Script (home PC only) -->
   <div class="card">
-    <h2>🌐 Option B — Edit on GitHub Directly</h2>
-    <p>No local tools needed. Edit <code>data.json</code> right in the browser.</p>
+    <h2>⚡ Option C — Run the Script <span class="auto-badge" style="background:#e9d8fd;color:#553c9a;">Home PC only</span></h2>
+    <p>Fastest when you're at your home PC. Get the JSON from Claude (Option B), then run <code>add_bill.py</code> — it updates <code>data.json</code>, commits, and pushes in one step.</p>
     <div class="steps">
-      <div class="step"><div class="step-num">1</div><div>Go to <strong>github.com/scammy37/jcpl-dashboard</strong> and open <code>data.json</code></div></div>
-      <div class="step"><div class="step-num">2</div><div>Click the ✏️ pencil icon (Edit this file)</div></div>
-      <div class="step"><div class="step-num">3</div><div>Add a comma after the last <code>}</code>, then paste your new entry before the closing <code>]</code></div></div>
-      <div class="step"><div class="step-num">4</div><div>Click <strong>Commit changes</strong> — GitHub Pages redeploys automatically within ~1 minute</div></div>
-    </div>
-  </div>
-
-  <!-- Option C: Script -->
-  <div class="card">
-    <h2>⚡ Option C — Run the Script (Fastest After Setup)</h2>
-    <p><code>add_bill.py</code> is in your repo. Get the JSON from Claude (Option A), paste it into the script, and it updates <code>data.json</code>, commits, and pushes automatically — no editing files manually.</p>
-
-    <div class="steps">
-      <div style="font-size:.82rem;font-weight:700;color:var(--text2);margin-bottom:10px;">Each new bill:</div>
-      <div class="step"><div class="step-num">1</div><div>Use the Option A prompt with Claude at <strong>claude.ai</strong> to get the JSON entry for your bill</div></div>
-      <div class="step"><div class="step-num">2</div><div>Open PowerShell in <code>Documents\jcpl-dashboard</code> (right-click folder → <strong>Open in Terminal</strong>)</div></div>
-      <div class="step"><div class="step-num">3</div><div>Run the script — no arguments needed:<br><code>python add_bill.py</code><br>Then paste the JSON from Claude and press Enter twice</div></div>
+      <div class="step"><div class="step-num">1</div><div>Get the JSON entry from Claude using the Option B prompt</div></div>
+      <div class="step"><div class="step-num">2</div><div>Open PowerShell in <code>C:\Claude\jcpl-dashboard</code> (right-click folder → <strong>Open in Terminal</strong>)</div></div>
+      <div class="step"><div class="step-num">3</div><div>Run: <code>python add_bill.py</code> — paste the JSON and press Enter twice</div></div>
       <div class="step"><div class="step-num">4</div><div>Review the values, press <strong>Y</strong> to commit and push — done</div></div>
     </div>
-
-    <div class="tip">
-      💡 You can also pass the JSON directly as an argument:<br>
+    <div class="tip">💡 You can also pass the JSON as a direct argument:<br>
       <code>python add_bill.py '{"label":"Jun 26","period":"Jun 04–Jul 03, 2026",...}'</code>
+    </div>
+  </div>
+
+  <!-- Option D: GitHub web editor -->
+  <div class="card">
+    <h2>🌐 Option D — Edit on GitHub Directly <span class="auto-badge" style="background:#bee3f8;color:#2b6cb0;">Any device</span></h2>
+    <p>Browser only — no Claude needed if you already have the JSON or want to type it in manually.</p>
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><div>Go to <a href="https://github.com/scammy37/jcpl-dashboard/blob/main/data.json" target="_blank" style="color:var(--accent);">github.com/scammy37/jcpl-dashboard → data.json</a></div></div>
+      <div class="step"><div class="step-num">2</div><div>Click the ✏️ pencil icon (Edit this file)</div></div>
+      <div class="step"><div class="step-num">3</div><div>Add a comma after the last <code>}</code>, paste your new entry before the closing <code>]</code></div></div>
+      <div class="step"><div class="step-num">4</div><div>Click <strong>Commit changes</strong> — GitHub Pages redeploys automatically within ~1 minute</div></div>
     </div>
   </div>
 
@@ -191,59 +186,14 @@ Rules:
     <div class="json-out">{"label":"May 26","period":"May 05–Jun 03, 2026","days":30,"kwh":1717,"cost":312.30,"temp":66,"rate":"Time-of-Day","onPeak":331,"offPeak":1386,"onPct":19.3,"offPct":80.7}</div>
     <div class="tip">
       💡 <strong>temp:</strong> If your bill doesn't show average temperature, use the monthly average for Rockaway, NJ and fill it in manually.<br><br>
-      💡 <strong>cost:</strong> Use electricity charges only — exclude any budget billing adjustments or credits.
+      💡 <strong>cost:</strong> Use electricity charges only — exclude any budget billing adjustments or credits.<br><br>
+      💡 <strong>Standard rate months:</strong> Set <code>onPeak</code>, <code>offPeak</code>, <code>onPct</code>, and <code>offPct</code> all to <code>null</code>.
     </div>
   </div>
 
 </div>
 
 <script>
-// ── PIN lock ─────────────────────────────────────────────
-const CORRECT_PIN = "9067";
-let pinEntry = "";
-
-function pinPress(digit) {
-  if (pinEntry.length >= CORRECT_PIN.length) return;
-  pinEntry += digit;
-  updateDots();
-  if (pinEntry.length === CORRECT_PIN.length) checkPin();
-}
-
-function pinDel() {
-  pinEntry = pinEntry.slice(0, -1);
-  document.getElementById("pinError").textContent = "";
-  updateDots();
-}
-
-function updateDots() {
-  for (let i = 0; i < CORRECT_PIN.length; i++) {
-    document.getElementById("d" + i).classList.toggle("filled", i < pinEntry.length);
-  }
-}
-
-function checkPin() {
-  if (pinEntry === CORRECT_PIN) {
-    const lock = document.getElementById("pinLock");
-    lock.classList.add("hide");
-    lock.addEventListener("transitionend", () => lock.remove(), { once: true });
-  } else {
-    const box = document.getElementById("pinBox");
-    box.classList.add("shake");
-    box.addEventListener("animationend", () => box.classList.remove("shake"), { once: true });
-    document.getElementById("pinError").textContent = "Incorrect PIN — try again";
-    pinEntry = "";
-    updateDots();
-  }
-}
-
-document.addEventListener("keydown", e => {
-  if (document.getElementById("pinLock")) {
-    if (e.key >= "0" && e.key <= "9") pinPress(e.key);
-    else if (e.key === "Backspace") pinDel();
-  }
-});
-// ─────────────────────────────────────────────────────────
-
 function copyPrompt(btn) {
   const text = document.getElementById('claudePrompt').textContent;
   navigator.clipboard.writeText(text).then(() => {

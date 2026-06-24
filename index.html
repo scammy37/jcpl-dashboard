@@ -80,14 +80,28 @@
   .dark .tag-tod { background:#1c4532; color:#68d391; }
   .loading { text-align:center; padding:60px; color:var(--text3); font-size:.9rem; }
   footer { text-align:center; padding:16px; color:var(--text3); font-size:.73rem; }
+  .tip { position:fixed; background:#1a202c; color:white; padding:6px 10px; border-radius:6px; font-size:.75rem; pointer-events:none; z-index:999; display:none; line-height:1.6; white-space:nowrap; }
+  .rank { display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:50%; background:var(--surface2); font-size:.7rem; font-weight:700; color:var(--text3); }
+  .rank.gold   { background:#f6e05e; color:#744210; }
+  .rank.silver { background:#e2e8f0; color:#4a5568; }
+  .rank.bronze { background:#f7d08a; color:#7b4c1e; }
+  .dark .rank.silver { background:#4a5568; color:#e2e8f0; }
+  .tag-eff-good { background:#c6f6d5; color:#276749; }
+  .tag-eff-warn { background:#fefcbf; color:#744210; }
+  .tag-eff-bad  { background:#fed7d7; color:#9b2c2c; }
+  .dark .tag-eff-good { background:#1c4532; color:#68d391; }
+  .dark .tag-eff-warn { background:#3d3000; color:#f6e05e; }
+  .dark .tag-eff-bad  { background:#4a1c1c; color:#fc8181; }
 </style>
 </head>
 <body>
+<div class="tip" id="tip"></div>
 <header>
   <h1>JCP&amp;L Electricity Dashboard ⚡</h1>
   <div style="display:flex;gap:8px;flex-wrap:wrap;">
     <a href="extract.html" class="hbtn">📄 Add Bill</a>
     <a href="https://www.firstenergycorp.com/log_in.html" target="_blank" class="hbtn">🔑 JCPL Login</a>
+    <a href="https://github.com/scammy37/jcpl-dashboard" target="_blank" class="hbtn">🐙 JCPL GitHub</a>
     <button class="hbtn" onclick="toggleDark()">🌙 Dark Mode</button>
   </div>
 </header>
@@ -113,11 +127,22 @@
     </div>
 
     <div class="cards">
+      <!-- Totals -->
       <div class="card"><div class="card-label">Total KWH</div><div class="card-value" id="cKwh">—</div><div class="card-sub" id="cKwhSub">—</div></div>
       <div class="card orange"><div class="card-label">Total Cost</div><div class="card-value" id="cCost">—</div><div class="card-sub">Consumption charges</div></div>
+      <div class="card orange"><div class="card-label">Projected Annual Cost</div><div class="card-value" id="cProjected">—</div><div class="card-sub" id="cProjectedSub">—</div></div>
+      <!-- Averages -->
+      <div class="card purple"><div class="card-label">Avg Monthly KWH</div><div class="card-value" id="cAvg">—</div><div class="card-sub" id="cAvgSub">—</div></div>
+      <div class="card"><div class="card-label">Avg Daily Cost</div><div class="card-value" id="cDailyCost">—</div><div class="card-sub" id="cDailyCostSub">—</div></div>
+      <div class="card green"><div class="card-label">Avg Billing Cycle</div><div class="card-value" id="cCycle">—</div><div class="card-sub" id="cCycleSub">—</div></div>
+      <!-- Extremes -->
       <div class="card red"><div class="card-label">Peak Month</div><div class="card-value" id="cPeak">—</div><div class="card-sub" id="cPeakSub">—</div></div>
       <div class="card green"><div class="card-label">Lowest Month</div><div class="card-value" id="cLow">—</div><div class="card-sub" id="cLowSub">—</div></div>
-      <div class="card purple"><div class="card-label">Avg Monthly KWH</div><div class="card-value" id="cAvg">—</div><div class="card-sub" id="cAvgSub">—</div></div>
+      <div class="card green"><div class="card-label">Cheapest $/KWH</div><div class="card-value" id="cCheapest">—</div><div class="card-sub" id="cCheapestSub">—</div></div>
+      <div class="card red"><div class="card-label">Most Expensive $/KWH</div><div class="card-value" id="cPriciest">—</div><div class="card-sub" id="cPriciestSub">—</div></div>
+      <!-- Trends -->
+      <div class="card"><div class="card-label">KWH 3-Month Trend</div><div class="card-value" id="c3mo">—</div><div class="card-sub" id="c3moSub">—</div></div>
+      <div class="card purple"><div class="card-label">On-Peak % Change</div><div class="card-value" id="cOnPctChange">—</div><div class="card-sub" id="cOnPctChangeSub">—</div></div>
     </div>
 
     <div id="peakSummary" style="background:var(--surface);border-radius:12px;padding:18px 22px;margin-bottom:20px;box-shadow:var(--shadow);border-top:4px solid var(--accent);">
@@ -178,19 +203,26 @@
       </div>
     </div>
 
+    <div class="charts">
+      <div class="chart-box"><h3>Cost Per Day ($/day)</h3><svg id="cpdSvg" height="200"></svg></div>
+      <div class="chart-box"><h3>Cost per KWH Trend ($/KWH)</h3><svg id="rateSvg" height="200"></svg></div>
+    </div>
+
     <div class="tbox">
       <h3>Billing Detail — <span id="rowCount">0</span> records &nbsp;<span>Double-click KWH or Cost to edit</span></h3>
       <table>
         <thead><tr id="tableHead">
           <th onclick="sortBy('date')" data-col="date">Period <span class="si" data-col="date">↕</span></th>
-          <th onclick="sortBy('days')" data-col="days">Days <span class="si" data-col="days">↕</span></th>
           <th onclick="sortBy('kwh')" data-col="kwh">KWH <span class="si" data-col="kwh">↕</span></th>
           <th>KWH Δ</th>
           <th onclick="sortBy('cost')" data-col="cost">Cost <span class="si" data-col="cost">↕</span></th>
           <th>Cost Δ</th>
           <th onclick="sortBy('perKwh')" data-col="perKwh">$/KWH <span class="si" data-col="perKwh">↕</span></th>
+          <th>vs Avg</th>
           <th onclick="sortBy('dailyKwh')" data-col="dailyKwh">Daily KWH <span class="si" data-col="dailyKwh">↕</span></th>
+          <th onclick="sortBy('dailyCost')" data-col="dailyCost">Daily Cost <span class="si" data-col="dailyCost">↕</span></th>
           <th onclick="sortBy('temp')" data-col="temp">Avg °F <span class="si" data-col="temp">↕</span></th>
+          <th onclick="sortBy('days')" data-col="days">Days <span class="si" data-col="days">↕</span></th>
           <th>Rate</th>
         </tr></thead>
         <tbody id="tbody"></tbody>
@@ -258,8 +290,8 @@ function applySortToFd() {
     fd = [...fd].sort((a,b) => (ALL.indexOf(a)-ALL.indexOf(b)) * sortDir);
   } else {
     fd = [...fd].sort((a,b) => {
-      const va = sortField==='dailyKwh'?a.kwh/a.days : sortField==='perKwh'?a.cost/a.kwh : a[sortField];
-      const vb = sortField==='dailyKwh'?b.kwh/b.days : sortField==='perKwh'?b.cost/b.kwh : b[sortField];
+      const va = sortField==='dailyKwh'?a.kwh/a.days : sortField==='perKwh'?a.cost/a.kwh : sortField==='dailyCost'?a.cost/a.days : a[sortField];
+      const vb = sortField==='dailyKwh'?b.kwh/b.days : sortField==='perKwh'?b.cost/b.kwh : sortField==='dailyCost'?b.cost/b.days : b[sortField];
       return (va-vb)*sortDir;
     });
   }
@@ -297,6 +329,8 @@ function renderAll() {
   renderCards();
   renderBarSvg('kwhSvg', fd.map(d=>d.kwh), '#3182ce', '', false);
   renderBarSvg('costSvg', fd.map(d=>Math.round(d.cost)), '#dd6b20', '$', false);
+  renderCostPerDay();
+  renderRateTrend();
   renderLineSvg();
   renderStackedBar();
   renderTable();
@@ -346,6 +380,46 @@ function renderCards() {
   document.getElementById('cLowSub').textContent = low.kwh.toLocaleString()+' KWH / $'+low.cost.toFixed(2);
   document.getElementById('cAvg').textContent = avg.toLocaleString();
   document.getElementById('cAvgSub').textContent = 'Avg cost: $'+(totalCost/fd.length).toFixed(2)+'/mo';
+  // New cards
+  const projected=(totalCost/fd.length)*12;
+  document.getElementById('cProjected').textContent='$'+Math.round(projected).toLocaleString();
+  document.getElementById('cProjectedSub').textContent='Based on $'+(totalCost/fd.length).toFixed(0)+'/mo avg';
+  const totalDays=fd.reduce((s,d)=>s+d.days,0);
+  document.getElementById('cDailyCost').textContent='$'+(totalCost/totalDays).toFixed(2);
+  document.getElementById('cDailyCostSub').textContent='Across '+totalDays+' billing days';
+  const cheapest=fd.reduce((a,b)=>(a.cost/a.kwh)<(b.cost/b.kwh)?a:b);
+  document.getElementById('cCheapest').textContent=cheapest.label;
+  document.getElementById('cCheapestSub').textContent='$'+(cheapest.cost/cheapest.kwh).toFixed(4)+'/KWH';
+  const todM=fd.filter(d=>d.onPeak!==null);
+  if(todM.length>=2){
+    const first=todM[0].onPct, last=todM[todM.length-1].onPct, delta=(last-first).toFixed(1);
+    document.getElementById('cOnPctChange').textContent=(delta>0?'+':'')+delta+'%';
+    document.getElementById('cOnPctChangeSub').textContent=first+'% → '+last+'% '+(delta<0?'▼ Improving':'▲ Rising');
+  } else {
+    document.getElementById('cOnPctChange').textContent='N/A';
+    document.getElementById('cOnPctChangeSub').textContent='Need 2+ ToD months';
+  }
+  // Most expensive $/KWH
+  const priciest=fd.reduce((a,b)=>(a.cost/a.kwh)>(b.cost/b.kwh)?a:b);
+  document.getElementById('cPriciest').textContent=priciest.label;
+  document.getElementById('cPriciestSub').textContent='$'+(priciest.cost/priciest.kwh).toFixed(4)+'/KWH · '+priciest.rate;
+  // 3-month KWH trend (last 3 vs prior 3, using date-sorted ALL)
+  const sorted=[...fd].sort((a,b)=>ALL.indexOf(a)-ALL.indexOf(b));
+  if(sorted.length>=6){
+    const last3=sorted.slice(-3).reduce((s,d)=>s+d.kwh,0);
+    const prev3=sorted.slice(-6,-3).reduce((s,d)=>s+d.kwh,0);
+    const pct=((last3-prev3)/prev3*100).toFixed(1);
+    document.getElementById('c3mo').textContent=(pct>0?'+':'')+pct+'%';
+    document.getElementById('c3moSub').textContent=(pct<0?'▼ Down':'▲ Up')+' vs prior 3 months';
+  } else {
+    document.getElementById('c3mo').textContent='N/A';
+    document.getElementById('c3moSub').textContent='Need 6+ months';
+  }
+  // Avg billing cycle
+  const avgDays=(fd.reduce((s,d)=>s+d.days,0)/fd.length).toFixed(1);
+  const minD=Math.min(...fd.map(d=>d.days)), maxD=Math.max(...fd.map(d=>d.days));
+  document.getElementById('cCycle').textContent=avgDays+' days';
+  document.getElementById('cCycleSub').textContent='Range: '+minD+'–'+maxD+' days';
 }
 
 function renderBarSvg(svgId, values, baseColor, prefix, dec) {
@@ -467,23 +541,29 @@ function renderTable() {
   const tbody=document.getElementById('tbody');
   tbody.innerHTML='';
   document.getElementById('rowCount').textContent=fd.length;
+  const avgRate=fd.reduce((s,d)=>s+d.cost/d.kwh,0)/fd.length;
   fd.forEach(d=>{
     const oi=ALL.indexOf(d), prev=oi>0?ALL[oi-1]:null;
     const kd=prev?d.kwh-prev.kwh:null, cd=prev?d.cost-prev.cost:null;
     const ks=kd!==null?`<span class="${kd>0?'up':'dn'}">${kd>0?'+':''}${kd}</span>`:'—';
     const cs=cd!==null?`<span class="${cd>0?'up':'dn'}">${cd>0?'+$':'-$'}${Math.abs(cd).toFixed(2)}</span>`:'—';
     const tag=d.rate==='Standard'?'<span class="tag tag-std">Standard</span>':'<span class="tag tag-tod">Time-of-Day</span>';
+    const rate=d.cost/d.kwh, delta=rate-avgRate;
+    const vsAvg=`<span class="tag ${delta<-0.001?'tag-eff-good':delta>0.003?'tag-eff-bad':'tag-eff-warn'}">${delta>=0?'+':''}$${delta.toFixed(4)}</span>`;
     const tr=document.createElement('tr');
     tr.className=oi===activeIdx?'active-row':'';
     tr.innerHTML=`
-      <td>${d.period.replace('–',' – ')}</td><td>${d.days}</td>
+      <td>${d.period.replace('–',' – ')}</td>
       <td class="editable-cell" data-idx="${oi}" data-field="kwh" ondblclick="makeEdit(this)"><strong>${d.kwh.toLocaleString()}</strong></td>
       <td>${ks}</td>
       <td class="editable-cell" data-idx="${oi}" data-field="cost" ondblclick="makeEdit(this)"><strong>$${d.cost.toFixed(2)}</strong></td>
       <td>${cs}</td>
-      <td>$${(d.cost/d.kwh).toFixed(4)}</td>
+      <td>$${rate.toFixed(4)}</td>
+      <td>${vsAvg}</td>
       <td>${(d.kwh/d.days).toFixed(1)}</td>
-      <td>${d.temp}°F</td><td>${tag}</td>`;
+      <td>$${(d.cost/d.days).toFixed(2)}</td>
+      <td>${d.temp}°F</td>
+      <td>${d.days}</td><td>${tag}</td>`;
     tr.addEventListener('click',e=>{if(e.target.contentEditable==='true')return;showDetail(oi);});
     tbody.appendChild(tr);
   });
@@ -540,6 +620,152 @@ function showDetail(idx) {
 }
 
 function toggleDark() { document.body.classList.toggle('dark'); renderAll(); }
+
+// ── Tooltip ─────────────────────────────────────────────
+function showTip(e,html){const t=document.getElementById('tip');t.innerHTML=html;t.style.display='block';moveTip(e);}
+function moveTip(e){const t=document.getElementById('tip');t.style.left=(e.clientX+14)+'px';t.style.top=(e.clientY-10)+'px';}
+function hideTip(){document.getElementById('tip').style.display='none';}
+
+// ── Shared line chart ────────────────────────────────────
+function lineChart(svgId, data, color, fmtFn, H) {
+  const dk = document.body.classList.contains('dark');
+  const svg = document.getElementById(svgId);
+  if (!svg) return;
+  const W = svg.parentElement.clientWidth - 40;
+  H = H || 200;
+  const PAD_T=24, PAD_B=28, PAD_L=52, PAD_R=18;
+  const plotW=W-PAD_L-PAD_R, plotH=H-PAD_T-PAD_B;
+  svg.setAttribute('width',W); svg.setAttribute('height',H);
+  const vals=data.map(d=>d.v);
+  const minV=Math.min(...vals), maxV=Math.max(...vals), range=maxV-minV||1;
+  const xOf=i=>PAD_L+(i/(data.length-1||1))*plotW;
+  const yOf=v=>PAD_T+plotH-((v-minV)/range)*plotH;
+  const avg=vals.reduce((a,b)=>a+b,0)/vals.length;
+  const gridC=dk?'#2d3748':'#e2e8f0', lblC=dk?'#718096':'#718096', surfC=dk?'#1a1f2e':'#fff';
+  let grid='';
+  for(let i=0;i<=4;i++){
+    const v=minV+range*i/4, y=yOf(v);
+    grid+=`<line x1="${PAD_L}" y1="${y.toFixed(1)}" x2="${(W-PAD_R).toFixed(1)}" y2="${y.toFixed(1)}" stroke="${gridC}" stroke-width="1"/>
+           <text x="${(PAD_L-5).toFixed(1)}" y="${y.toFixed(1)}" text-anchor="end" dominant-baseline="middle" font-size="8.5" fill="${lblC}">${fmtFn(v)}</text>`;
+  }
+  const avgY=yOf(avg);
+  const refLine=`<line x1="${PAD_L}" y1="${avgY.toFixed(1)}" x2="${(W-PAD_R).toFixed(1)}" y2="${avgY.toFixed(1)}" stroke="${color}" stroke-width="1" stroke-dasharray="4,3" opacity=".45"/>
+    <text x="${(W-PAD_R+2).toFixed(1)}" y="${avgY.toFixed(1)}" dominant-baseline="middle" font-size="7.5" fill="${color}" opacity=".7">avg</text>`;
+  const path=data.map((d,i)=>`${i===0?'M':'L'}${xOf(i).toFixed(1)},${yOf(d.v).toFixed(1)}`).join(' ');
+  const fill=path+` L${xOf(data.length-1).toFixed(1)},${(PAD_T+plotH).toFixed(1)} L${PAD_L},${(PAD_T+plotH).toFixed(1)} Z`;
+  const uid='g'+svgId;
+  const activeLabel = activeIdx !== null ? ALL[activeIdx]?.label : null;
+  let dots='', lbels='';
+  data.forEach((d,i)=>{
+    const cx=xOf(i), cy=yOf(d.v);
+    const isActive = d.label === activeLabel;
+    const r = isActive ? 6 : 4;
+    const stroke = isActive ? '#fff' : surfC;
+    const sw = isActive ? 2 : 1.5;
+    dots+=`<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${r}" fill="${isActive?'#1a5276':color}" stroke="${stroke}" stroke-width="${sw}" style="cursor:pointer"
+      onmouseenter="showTip(event,'<b>${d.label}</b><br>${fmtFn(d.v)}')" onmousemove="moveTip(event)" onmouseleave="hideTip()"/>`;
+    if(isActive) dots+=`<text x="${cx.toFixed(1)}" y="${(cy-11).toFixed(1)}" text-anchor="middle" font-size="8.5" font-weight="700" fill="${dk?'#63b3ed':'#1a5276'}">${fmtFn(d.v)}</text>`;
+    lbels+=`<text x="${cx.toFixed(1)}" y="${(H-5).toFixed(1)}" text-anchor="middle" font-size="8.5" fill="${isActive?(dk?'#63b3ed':'#2b6cb0'):lblC}" font-weight="${isActive?'700':'400'}">${d.label}</text>`;
+  });
+  svg.innerHTML=`<defs><linearGradient id="${uid}" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="${color}" stop-opacity=".18"/><stop offset="100%" stop-color="${color}" stop-opacity="0"/></linearGradient></defs>
+    ${grid}${refLine}<path d="${fill}" fill="url(#${uid})"/>
+    <path d="${path}" fill="none" stroke="${color}" stroke-width="2.2" stroke-linejoin="round"/>
+    ${dots}${lbels}`;
+}
+
+// ── Feature 5: Cost per day ──────────────────────────────
+function renderCostPerDay() {
+  lineChart('cpdSvg', fd.map(d=>({label:d.label,v:d.cost/d.days})), '#dd6b20', v=>'$'+v.toFixed(2));
+}
+
+// ── Feature 6: $/KWH rate trend ─────────────────────────
+function renderRateTrend() {
+  lineChart('rateSvg', fd.map(d=>({label:d.label,v:d.cost/d.kwh})), '#805ad5', v=>'$'+v.toFixed(4));
+}
+
+// ── Feature 7: On-peak % trend ──────────────────────────
+function renderOnPeakTrend() {
+  const tod=fd.filter(d=>d.onPeak!==null);
+  const svg=document.getElementById('onPctSvg');
+  if(!tod.length){svg.innerHTML='<text x="50%" y="50%" text-anchor="middle" font-size="11" fill="#718096">No Time-of-Day data in current filter</text>';return;}
+  lineChart('onPctSvg', tod.map(d=>({label:d.label,v:d.onPct})), '#e53e3e', v=>v.toFixed(1)+'%');
+}
+
+// ── Feature 8: Temp vs KWH scatter ──────────────────────
+function renderScatter() {
+  const dk=document.body.classList.contains('dark');
+  const svg=document.getElementById('scatterSvg');
+  if(!svg) return;
+  const W=svg.parentElement.clientWidth-40, H=200;
+  const PAD_T=16, PAD_B=28, PAD_L=52, PAD_R=80;
+  svg.setAttribute('width',W); svg.setAttribute('height',H);
+  const plotW=W-PAD_L-PAD_R, plotH=H-PAD_T-PAD_B;
+  const temps=fd.map(d=>d.temp).filter(t=>t!==null);
+  if(!temps.length){svg.innerHTML='';return;}
+  const kwhs=fd.filter(d=>d.temp!==null).map(d=>d.kwh);
+  const minT=Math.min(...temps)-2, maxT=Math.max(...temps)+2;
+  const minK=Math.min(...kwhs)*0.93, maxK=Math.max(...kwhs)*1.05;
+  const xOf=t=>PAD_L+((t-minT)/(maxT-minT))*plotW;
+  const yOf=k=>PAD_T+plotH-((k-minK)/(maxK-minK))*plotH;
+  const gridC=dk?'#2d3748':'#e2e8f0', lblC=dk?'#718096':'#718096', surfC=dk?'#1a1f2e':'#fff';
+  let grid='';
+  for(let i=0;i<=3;i++){
+    const k=minK+(maxK-minK)*i/3, y=yOf(k);
+    grid+=`<line x1="${PAD_L}" y1="${y.toFixed(1)}" x2="${(W-PAD_R).toFixed(1)}" y2="${y.toFixed(1)}" stroke="${gridC}" stroke-width="1"/>
+           <text x="${(PAD_L-5).toFixed(1)}" y="${y.toFixed(1)}" text-anchor="end" dominant-baseline="middle" font-size="8" fill="${lblC}">${Math.round(k).toLocaleString()}</text>`;
+  }
+  for(let i=0;i<=4;i++){
+    const t=minT+(maxT-minT)*i/4, x=xOf(t);
+    grid+=`<text x="${x.toFixed(1)}" y="${(H-5).toFixed(1)}" text-anchor="middle" font-size="8.5" fill="${lblC}">${Math.round(t)}°F</text>`;
+  }
+  // Regression line
+  const pts=fd.filter(d=>d.temp!==null);
+  const n=pts.length, sx=pts.reduce((s,d)=>s+d.temp,0), sy=pts.reduce((s,d)=>s+d.kwh,0);
+  const sxy=pts.reduce((s,d)=>s+d.temp*d.kwh,0), sx2=pts.reduce((s,d)=>s+d.temp*d.temp,0);
+  const m=(n*sxy-sx*sy)/(n*sx2-sx*sx), b=(sy-m*sx)/n;
+  const rx1=minT+2, ry1=m*rx1+b, rx2=maxT-2, ry2=m*rx2+b;
+  const regLine=`<line x1="${xOf(rx1).toFixed(1)}" y1="${yOf(ry1).toFixed(1)}" x2="${xOf(rx2).toFixed(1)}" y2="${yOf(ry2).toFixed(1)}" stroke="#718096" stroke-width="1.5" stroke-dasharray="5,3" opacity=".55"/>`;
+  const activeLabel=activeIdx!==null?ALL[activeIdx]?.label:null;
+  let dots='';
+  pts.forEach(d=>{
+    const isActive=d.label===activeLabel;
+    const col=isActive?'#1a5276':d.rate==='Time-of-Day'?'#38a169':'#3182ce';
+    const r=isActive?7:5;
+    dots+=`<circle cx="${xOf(d.temp).toFixed(1)}" cy="${yOf(d.kwh).toFixed(1)}" r="${r}" fill="${col}" opacity="${isActive?1:.85}" stroke="${isActive?'#fff':surfC}" stroke-width="${isActive?2:1.5}" style="cursor:pointer"
+      onmouseenter="showTip(event,'<b>${d.label}</b><br>${d.temp}°F · ${d.kwh.toLocaleString()} KWH')" onmousemove="moveTip(event)" onmouseleave="hideTip()"/>`;
+  });
+  const leg=`<circle cx="${W-PAD_R+8}" cy="24" r="4" fill="#3182ce"/>
+    <text x="${W-PAD_R+16}" y="24" dominant-baseline="middle" font-size="8" fill="${lblC}">Standard</text>
+    <circle cx="${W-PAD_R+8}" cy="38" r="4" fill="#38a169"/>
+    <text x="${W-PAD_R+16}" y="38" dominant-baseline="middle" font-size="8" fill="${lblC}">Time-of-Day</text>`;
+  svg.innerHTML=`${grid}${regLine}${dots}${leg}`;
+}
+
+// ── Feature 10: Efficiency rankings ─────────────────────
+function renderRankTable() {
+  const ranked=[...fd].map(d=>({...d,perKwh:d.cost/d.kwh,dailyKwh:d.kwh/d.days,dailyCost:d.cost/d.days}))
+    .sort((a,b)=>a.perKwh-b.perKwh);
+  const avg=ranked.reduce((s,d)=>s+d.perKwh,0)/ranked.length;
+  let html='';
+  const activeLabel=activeIdx!==null?ALL[activeIdx]?.label:null;
+  ranked.forEach((d,i)=>{
+    const isActive=d.label===activeLabel;
+    const rk=i===0?'<span class="rank gold">1</span>':i===1?'<span class="rank silver">2</span>':i===2?'<span class="rank bronze">3</span>':`<span class="rank">${i+1}</span>`;
+    const delta=d.perKwh-avg;
+    const cls=delta<-0.001?'tag-eff-good':delta>0.003?'tag-eff-bad':'tag-eff-warn';
+    const deltaEl=`<span class="tag ${cls}">${delta>=0?'+':''}$${delta.toFixed(4)}</span>`;
+    const rateTag=d.rate==='Standard'?'<span class="tag tag-std">Standard</span>':'<span class="tag tag-tod">ToD</span>';
+    html+=`<tr class="${isActive?'active-row':''}">
+      <td>${rk}</td><td><strong>${d.label}</strong></td>
+      <td style="color:var(--text3);font-size:.75rem;">${d.period.replace('–',' – ')}</td>
+      <td><strong>$${d.perKwh.toFixed(4)}</strong></td><td>${deltaEl}</td>
+      <td>${d.dailyKwh.toFixed(1)}</td><td>$${d.dailyCost.toFixed(2)}</td><td>${rateTag}</td>
+    </tr>`;
+  });
+  const el=document.getElementById('rankBody');
+  if(el) el.innerHTML=html;
+}
 
 function exportCSV() {
   const rows=[['Period','Days','KWH','Cost','$/KWH','Daily KWH','Avg Temp F','Rate'],...fd.map(d=>[d.period,d.days,d.kwh,d.cost.toFixed(2),(d.cost/d.kwh).toFixed(4),(d.kwh/d.days).toFixed(1),d.temp,d.rate])];
