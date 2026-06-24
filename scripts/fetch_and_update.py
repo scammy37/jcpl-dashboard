@@ -54,13 +54,15 @@ async def fetch_pdf() -> Path:
         await page.screenshot(path=str(SCREENSHOT_DIR / "01_login.png"))
 
         try:
-            # The login page has no form — it has a button that triggers an OAuth2/B2C redirect.
-            # Click it and wait for navigation to the Microsoft B2C login page.
-            print("-> Clicking Log In button (OAuth2 redirect)...")
-            await page.click("a.b2cLoginButton, [data-login-page]", timeout=10000)
-            await page.wait_for_load_state("networkidle")
+            # Navigate directly to the OAuth2 endpoint (avoids JS-click redirect issues)
+            print("-> Navigating to OAuth2 login endpoint...")
+            await page.goto(
+                "https://www.firstenergycorp.com/login/customer/oauth2/authorization/logIn",
+                wait_until="networkidle",
+            )
+            await asyncio.sleep(2)
             await page.screenshot(path=str(SCREENSHOT_DIR / "02_b2c_page.png"))
-            print(f"   Redirected to: {page.url}")
+            print(f"   B2C page URL: {page.url}")
 
             # Azure AD B2C standard field IDs — use type() to simulate real keystrokes
             print("-> Filling username on B2C page...")
