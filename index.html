@@ -383,47 +383,43 @@ function renderLineSvg() {
   const dark = document.body.classList.contains('dark');
   const svg = document.getElementById('lineSvg');
   const W = svg.parentElement.clientWidth - 40;
-  const H=240, PL=10, PR=150, PT=24, PB=30;
+  const H=240, PAD_T=28, LABEL_H=30, plotH=H-PAD_T-LABEL_H;
   svg.setAttribute('width',W); svg.setAttribute('height',H);
-  const plotW=W-PL-PR, plotH=H-PT-PB;
   const n=fd.length;
   if(!n){svg.innerHTML='';return;}
   const maxK=Math.max(...fd.map(d=>d.kwh));
   const minT=Math.min(...fd.map(d=>d.temp)), maxT=Math.max(...fd.map(d=>d.temp));
-  const yTemp=v=>PT+plotH-((v-minT)/(maxT-minT||1))*plotH;
-  const gapR=0.25, stepW=plotW/n, barW=stepW*(1-gapR);
-  let bars='', tempPath='', tempDots='', lbls='', grid='', dataLabels='';
-  for(let g=0;g<=4;g++){const yg=PT+(plotH/4)*g;grid+=`<line x1="${PL}" y1="${yg.toFixed(0)}" x2="${PL+plotW}" y2="${yg.toFixed(0)}" stroke="#e2e8f0" stroke-width="1"/>`;}
+  const yTemp=v=>PAD_T+plotH-((v-minT)/(maxT-minT||1))*plotH;
+  // Same bar geometry as the stacked chart so months line up
+  const gapR=0.22, stepW=(W-16)/n, barW=stepW*(1-gapR);
+  const valCol=dark?'#a0aec0':'#4a5568', lblCol='#718096';
+  let bars='', tempPath='', tempDots='', lbls='', dataLabels='';
   fd.forEach((d,i)=>{
-    const bx=PL+i*stepW+stepW*gapR/2, cx=(bx+barW/2).toFixed(1);
-    const bh=(d.kwh/maxK)*plotH, by=PT+plotH-bh;
+    const x=8+i*stepW+stepW*gapR/2, cx=(x+barW/2).toFixed(1);
+    const bh=(d.kwh/maxK)*plotH, by=PAD_T+plotH-bh;
     const oi=ALL.indexOf(d), isActive=oi===activeIdx;
-    const col=isActive?'#1a5276':'#63b3ed';
-    bars+=`<rect x="${bx.toFixed(1)}" y="${by.toFixed(1)}" width="${barW.toFixed(1)}" height="${bh.toFixed(1)}" fill="${col}" rx="3" opacity="${isActive?1:0.82}" style="cursor:pointer" onclick="showDetail(${oi})"><title>${d.label}: ${d.kwh.toLocaleString()} KWH</title></rect>`;
-    const kText=d.kwh.toLocaleString(), kW=kText.length*5.2+6;
-    dataLabels+=`<rect x="${(+cx-kW/2).toFixed(1)}" y="${(by-13).toFixed(1)}" width="${kW.toFixed(1)}" height="12" rx="2" fill="white" fill-opacity="0.85"/>`;
-    dataLabels+=`<text x="${cx}" y="${(by-3).toFixed(1)}" text-anchor="middle" font-size="8" font-weight="700" fill="${dark?'#63b3ed':'#2b6cb0'}">${kText}</text>`;
+    bars+=`<rect x="${x.toFixed(1)}" y="${by.toFixed(1)}" width="${barW.toFixed(1)}" height="${bh.toFixed(1)}" fill="${isActive?'#1a5276':'#63b3ed'}" rx="3" opacity="${isActive?1:0.85}" style="cursor:pointer" onclick="showDetail(${oi})"><title>${d.label}: ${d.kwh.toLocaleString()} KWH, ${d.temp}°F</title></rect>`;
+    dataLabels+=`<text x="${cx}" y="${(by-4).toFixed(1)}" text-anchor="middle" font-size="8.5" font-weight="700" fill="${valCol}">${d.kwh.toLocaleString()}</text>`;
     const tx=+cx, ty=yTemp(d.temp);
     tempPath+=(i===0?'M':'L')+`${tx.toFixed(1)},${ty.toFixed(1)} `;
     tempDots+=`<circle cx="${tx.toFixed(1)}" cy="${ty.toFixed(1)}" r="4" fill="#e53e3e" stroke="${dark?'#1a1f2e':'white'}" stroke-width="1.5"><title>${d.label}: ${d.temp}°F</title></circle>`;
-    const tText=d.temp+'°', tW=tText.length*5.2+6, tLabelY=ty>PT+18?ty-9:ty+17;
-    dataLabels+=`<rect x="${(tx-tW/2).toFixed(1)}" y="${(tLabelY-10).toFixed(1)}" width="${tW.toFixed(1)}" height="12" rx="2" fill="${dark?'#1a1f2e':'white'}" fill-opacity="0.85"/>`;
+    const tText=d.temp+'°', tLabelY=ty>PAD_T+18?ty-9:ty+17;
+    dataLabels+=`<rect x="${(tx-tText.length*3).toFixed(1)}" y="${(tLabelY-10).toFixed(1)}" width="${(tText.length*6+4).toFixed(1)}" height="12" rx="2" fill="${dark?'#1a1f2e':'white'}" fill-opacity="0.88"/>`;
     dataLabels+=`<text x="${tx.toFixed(1)}" y="${tLabelY.toFixed(1)}" text-anchor="middle" font-size="8" font-weight="700" fill="#e53e3e">${tText}</text>`;
-    lbls+=`<text x="${cx}" y="${H-6}" text-anchor="middle" font-size="9" fill="#718096">${d.label}</text>`;
+    lbls+=`<text x="${cx}" y="${H-6}" text-anchor="middle" font-size="9" fill="${lblCol}">${d.label}</text>`;
   });
-  const lx=PL+plotW+10;
+  // Legend overlaid top-right, no longer eating into bar width
+  const legX=W-145, legY=4;
   const legBg=dark?'#1a1f2e':'white', legBorder=dark?'#2d3748':'#e2e8f0', legText=dark?'#a0aec0':'#4a5568';
-  svg.innerHTML=`${grid}
-    <line x1="${PL}" y1="${PT}" x2="${PL}" y2="${PT+plotH}" stroke="${dark?'#2d3748':'#cbd5e0'}" stroke-width="1.5"/>
-    <line x1="${PL}" y1="${PT+plotH}" x2="${PL+plotW}" y2="${PT+plotH}" stroke="${dark?'#2d3748':'#cbd5e0'}" stroke-width="1.5"/>
-    ${bars}<path d="${tempPath}" fill="none" stroke="#e53e3e" stroke-width="2.2" stroke-linejoin="round" stroke-dasharray="5,3"/>
+  svg.innerHTML=`${bars}
+    <path d="${tempPath}" fill="none" stroke="#e53e3e" stroke-width="2.2" stroke-linejoin="round" stroke-dasharray="5,3"/>
     ${tempDots}${dataLabels}${lbls}
-    <rect x="${lx}" y="${PT+8}" width="138" height="52" rx="6" fill="${legBg}" stroke="${legBorder}" fill-opacity=".95"/>
-    <rect x="${lx+10}" y="${PT+21}" width="14" height="10" rx="2" fill="#63b3ed"/>
-    <text x="${lx+30}" y="${PT+30}" font-size="11" fill="${legText}">KWH Usage</text>
-    <line x1="${lx+10}" y1="${PT+44}" x2="${lx+24}" y2="${PT+44}" stroke="#e53e3e" stroke-width="2" stroke-dasharray="4,2"/>
-    <circle cx="${lx+17}" cy="${PT+44}" r="3" fill="#e53e3e"/>
-    <text x="${lx+30}" y="${PT+48}" font-size="11" fill="${legText}">Avg Temp °F</text>`;
+    <rect x="${legX}" y="${legY}" width="138" height="52" rx="6" fill="${legBg}" stroke="${legBorder}" fill-opacity=".95"/>
+    <rect x="${legX+10}" y="${legY+13}" width="14" height="10" rx="2" fill="#63b3ed"/>
+    <text x="${legX+30}" y="${legY+22}" font-size="11" fill="${legText}">KWH Usage</text>
+    <line x1="${legX+10}" y1="${legY+36}" x2="${legX+24}" y2="${legY+36}" stroke="#e53e3e" stroke-width="2" stroke-dasharray="4,2"/>
+    <circle cx="${legX+17}" cy="${legY+36}" r="3" fill="#e53e3e"/>
+    <text x="${legX+30}" y="${legY+40}" font-size="11" fill="${legText}">Avg Temp °F</text>`;
 }
 
 function renderStackedBar() {
