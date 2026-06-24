@@ -59,6 +59,20 @@ async def fetch_pdf() -> Path:
 
         page = await context.new_page()
 
+        async def dismiss_privacy_modal():
+            for sel in [
+                "button:has-text('ACCEPT ALL')",
+                "button:has-text('Accept All')",
+                "button:has-text('REJECT')",
+            ]:
+                try:
+                    await page.click(sel, timeout=3000)
+                    await asyncio.sleep(0.5)
+                    print("   Dismissed privacy modal")
+                    return
+                except PlaywrightTimeoutError:
+                    continue
+
         # Navigate to account overview to verify session is valid
         print("-> Checking session...")
         await page.goto(
@@ -76,49 +90,80 @@ async def fetch_pdf() -> Path:
                 "and update the JCPL_COOKIES secret."
             )
 
-        # Navigate to bill & payment history where PDF lives
-        print("-> Navigating to bill history...")
+        await dismiss_privacy_modal()
+        await page.screenshot(path=str(SCREENSHOT_DIR / "02_account_clean.png"))
+
+        pdf_path = DOWNLOAD_DIR / "latest_bill.pdf"
+
+        # "View Bill" button is visible on the account overview page — try that first
+        print("-> Clicking 'View Bill' on account page...")
+        try:
+            async with page.expect_download(timeout=20000) as dl:
+                await page.click("button:has-text('View Bill')", timeout=8000)
+            download = await dl.value
+            await download.save_as(str(pdf_path))
+            print(f"   Downloaded -> {pdf_path}")
+            await browser.close()
+            return pdf_path
+        except PlaywrightTimeoutError:
+            # Didn't trigger download — may have navigated to a bill viewer page
+            await page.wait_for_load_state("networkidle")
+            await page.screenshot(path=str(SCREENSHOT_DIR / "03_after_view_bill.png"))
+            print(f"   URL after click: {page.url}")
+        except Exception as e:
+            print(f"   'View Bill' click failed: {e}")
+
+        # Look for a PDF link on wherever we landed
+        await dismiss_privacy_modal()
+        for sel in ["a[href*='.pdf']", "a:has-text('Download')", "a:has-text('PDF')", "button:has-text('Download')"]:
+            try:
+                async with page.expect_download(timeout=15000) as dl:
+                    await page.click(sel, timeout=5000)
+                download = await dl.value
+                await download.save_as(str(pdf_path))
+                print(f"   Downloaded via '{sel}' -> {pdf_path}")
+                await browser.close()
+                return pdf_path
+            except PlaywrightTimeoutError:
+                continue
+            except Exception as e:
+                print(f"   '{sel}' failed: {e}")
+
+        # Fall back to bill history page
+        print("-> Navigating to bill history page...")
         await page.goto(
             "https://www.firstenergycorp.com/my_account/bill_payment_history.html",
             wait_until="networkidle",
         )
-        await asyncio.sleep(2)
-        await page.screenshot(path=str(SCREENSHOT_DIR / "02_bill_history.png"))
+        await asyncio.sleep(3)
+        await dismiss_privacy_modal()
+        await asyncio.sleep(3)
+        await page.screenshot(path=str(SCREENSHOT_DIR / "04_bill_history.png"))
         print(f"   URL: {page.url}")
 
-        # Find and download the bill PDF
-        print("-> Looking for bill PDF download link...")
-        await page.screenshot(path=str(SCREENSHOT_DIR / "03_bill_section.png"))
-
-        pdf_path = DOWNLOAD_DIR / "latest_bill.pdf"
-        download_selectors = [
+        for sel in [
             "a[href*='.pdf']",
             "a:has-text('View Bill')",
             "a:has-text('Download Bill')",
-            "a:has-text('Current Bill')",
             "a:has-text('PDF')",
             "button:has-text('View Bill')",
             "button:has-text('Download')",
-            "a:has-text('View')",
-        ]
-
-        for selector in download_selectors:
+        ]:
             try:
                 async with page.expect_download(timeout=15000) as dl:
-                    await page.click(selector, timeout=5000)
+                    await page.click(sel, timeout=5000)
                 download = await dl.value
                 await download.save_as(str(pdf_path))
-                print(f"   Downloaded via '{selector}' -> {pdf_path}")
+                print(f"   Downloaded via '{sel}' -> {pdf_path}")
                 await browser.close()
                 return pdf_path
             except PlaywrightTimeoutError:
-                print(f"   Selector '{selector}' timed out, trying next...")
+                print(f"   '{sel}' timed out")
                 continue
             except Exception as e:
-                print(f"   Selector '{selector}' failed: {e}")
-                continue
+                print(f"   '{sel}' failed: {e}")
 
-        await page.screenshot(path=str(SCREENSHOT_DIR / "04_download_failed.png"))
+        await page.screenshot(path=str(SCREENSHOT_DIR / "05_download_failed.png"))
         html = await page.content()
         (ROOT / "debug_page.html").write_text(html, encoding="utf-8")
         await page.screenshot(path=str(ROOT / "debug_page.png"))
