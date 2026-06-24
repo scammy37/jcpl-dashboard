@@ -2,7 +2,7 @@ name: Fetch JCP&L Bill
 
 on:
   schedule:
-    - cron: '0 9 10 * *'   # 9am UTC on the 10th of every month
+    - cron: '0 9 7-12 * *'  # 9am UTC daily from the 7th through 12th
   workflow_dispatch:         # manual trigger for testing
 
 jobs:
