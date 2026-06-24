@@ -11,7 +11,7 @@ Live site: **https://scammy37.github.io/jcpl-dashboard**
 | File | Purpose |
 |------|---------|
 | `index.html` | Main dashboard — charts, table, filters |
-| `extract.html` | Add-bill page (PIN protected) |
+| `extract.html` | Add-bill page — instructions and setup guide |
 | `data.json` | All billing records — the data source |
 | `add_bill.py` | Script to manually add a bill entry and push |
 | `sw.js` | Service worker — enables PWA install and offline access |
@@ -46,26 +46,29 @@ You can also trigger the workflow manually from the **Actions** tab → **Fetch 
 
 ## Adding a bill manually
 
-The **Add Bill** page (`extract.html`) is PIN protected. Click the link in the dashboard header to open it.
+The **Add Bill** page (`extract.html`) has full instructions. Click the link in the dashboard header. Four options are available:
 
-### Option A — Claude chat (recommended)
-1. Go to [claude.ai](https://claude.ai) and attach your JCP&L PDF bill
-2. Use the prompt on the Add Bill page to extract the data as JSON
-3. Open `data.json`, add the entry at the end of the array, save
-4. `git add data.json && git commit -m "Add [Month] bill" && git push`
+### Option A — Auto-fetch (automatic)
+GitHub Actions runs daily on the 7th–12th and adds the bill automatically. No action needed unless it emails you a failure.
 
-### Option B — GitHub web editor
-1. Open `data.json` in your repo on github.com
-2. Click the ✏️ pencil icon to edit
-3. Add the new entry at the end of the array
-4. Click **Commit changes** — GitHub Pages redeploys automatically
+### Option B — Claude + GitHub (any device)
+1. Go to [claude.ai](https://claude.ai), attach your JCP&L PDF, use the prompt on the Add Bill page
+2. Copy the JSON Claude returns
+3. Open `data.json` on [github.com/scammy37/jcpl-dashboard](https://github.com/scammy37/jcpl-dashboard), click ✏️, paste the entry, commit
 
-### Option C — Script (fastest)
-Get the JSON from Claude (Option A), then run:
+### Option C — Script (home PC, fastest)
+Get the JSON from Claude (Option B), then run:
 ```
 python add_bill.py
 ```
 Paste the JSON when prompted, press Enter twice, then Y to commit and push.
+
+### Option D — GitHub web editor (any device)
+1. Open `data.json` on github.com
+2. Click ✏️, add the new entry at the end of the array
+3. Click **Commit changes** — GitHub Pages redeploys automatically
+
+> **New machine?** See the "First time on a new computer?" section on the Add Bill page for Git, Python, and clone setup instructions.
 
 ---
 
