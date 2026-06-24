@@ -14,6 +14,7 @@ import asyncio
 import os
 import re
 import json
+import urllib.request
 from pathlib import Path
 from playwright.async_api import async_playwright, TimeoutError as PlaywrightTimeoutError
 import pdfplumber
@@ -95,23 +96,51 @@ async def fetch_pdf() -> Path:
 
         pdf_path = DOWNLOAD_DIR / "latest_bill.pdf"
 
-        # "View Bill" button is visible on the account overview page — try that first
-        print("-> Clicking 'View Bill' on account page...")
+        # "View Bill" opens the PDF in a new tab — catch the popup, grab the URL, download directly
+        print("-> Clicking 'View Bill' (expecting new tab)...")
         try:
-            async with page.expect_download(timeout=20000) as dl:
+            async with context.expect_page(timeout=20000) as new_page_info:
                 await page.click("button:has-text('View Bill')", timeout=8000)
-            download = await dl.value
-            await download.save_as(str(pdf_path))
-            print(f"   Downloaded -> {pdf_path}")
+            popup = await new_page_info.value
+            await popup.wait_for_load_state("domcontentloaded")
+            pdf_url = popup.url
+            print(f"   Popup URL: {pdf_url}")
+            await popup.screenshot(path=str(SCREENSHOT_DIR / "03_pdf_popup.png"))
+            await popup.close()
+
+            # Download PDF with session cookies via urllib (no extra dependencies)
+            cookie_dict = {}
+            for pair in cookies_raw.split("; "):
+                if "=" in pair:
+                    name, _, value = pair.partition("=")
+                    cookie_dict[name.strip()] = value.strip()
+            cookie_header = "; ".join(f"{k}={v}" for k, v in cookie_dict.items())
+
+            req = urllib.request.Request(
+                pdf_url,
+                headers={
+                    "Cookie": cookie_header,
+                    "User-Agent": (
+                        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                        "AppleWebKit/537.36 (KHTML, like Gecko) "
+                        "Chrome/149.0.0.0 Safari/537.36"
+                    ),
+                },
+            )
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                pdf_path.write_bytes(resp.read())
+            print(f"   Saved PDF -> {pdf_path}")
             await browser.close()
             return pdf_path
+
         except PlaywrightTimeoutError:
-            # Didn't trigger download — may have navigated to a bill viewer page
+            print("   No popup appeared — button may behave differently")
             await page.wait_for_load_state("networkidle")
             await page.screenshot(path=str(SCREENSHOT_DIR / "03_after_view_bill.png"))
             print(f"   URL after click: {page.url}")
         except Exception as e:
-            print(f"   'View Bill' click failed: {e}")
+            print(f"   Popup approach failed: {e}")
+            await page.screenshot(path=str(SCREENSHOT_DIR / "03_after_view_bill.png"))
 
         # Look for a PDF link on wherever we landed
         await dismiss_privacy_modal()
