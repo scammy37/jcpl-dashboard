@@ -38,82 +38,24 @@ async def fetch_pdf() -> Path:
         await page.screenshot(path=str(SCREENSHOT_DIR / "01_login.png"))
 
         try:
-            # Dismiss cookie/consent banner if present
-            for consent_sel in [
-                "button:has-text('Accept')",
-                "button:has-text('Agree')",
-                "button:has-text('OK')",
-                "#onetrust-accept-btn-handler",
-                ".cookie-accept",
-            ]:
-                try:
-                    await page.click(consent_sel, timeout=2000)
-                    print(f"   Dismissed consent banner via '{consent_sel}'")
-                    break
-                except PlaywrightTimeoutError:
-                    continue
-
-            # Fill username — try each selector individually
-            print("-> Filling username...")
-            username_selectors = [
-                "input[type='email']",
-                "#username",
-                "input[name='username']",
-                "input[name='userid']",
-                "input[name='user']",
-                "input[type='text']",
-                "input[autocomplete='username']",
-                "input[id*='email' i]",
-                "input[name*='email' i]",
-                "input[id*='user' i]",
-                "input[name*='user' i]",
-                "input[id*='login' i]",
-                "input[name*='login' i]",
-            ]
-            filled_username = False
-            for sel in username_selectors:
-                try:
-                    await page.fill(sel, username, timeout=3000)
-                    print(f"   Username filled via '{sel}'")
-                    filled_username = True
-                    break
-                except PlaywrightTimeoutError:
-                    continue
-            if not filled_username:
-                raise RuntimeError("Could not find username input field — no selector matched.")
-
-            # Fill password
-            print("-> Filling password...")
-            password_selectors = [
-                "input[type='password']",
-                "#password",
-                "input[name='password']",
-                "input[name='passwd']",
-                "input[name='pwd']",
-                "input[autocomplete='current-password']",
-                "input[id*='password' i]",
-                "input[name*='password' i]",
-            ]
-            filled_password = False
-            for sel in password_selectors:
-                try:
-                    await page.fill(sel, password, timeout=3000)
-                    print(f"   Password filled via '{sel}'")
-                    filled_password = True
-                    break
-                except PlaywrightTimeoutError:
-                    continue
-            if not filled_password:
-                raise RuntimeError("Could not find password input field — no selector matched.")
-
-            await page.screenshot(path=str(SCREENSHOT_DIR / "02_filled.png"))
-
-            print("-> Submitting login...")
-            await page.click(
-                "button[type='submit'], input[type='submit'], .login-button, .btn-login, button.btn-primary"
-            )
+            # The login page has no form — it has a button that triggers an OAuth2/B2C redirect.
+            # Click it and wait for navigation to the Microsoft B2C login page.
+            print("-> Clicking Log In button (OAuth2 redirect)...")
+            await page.click("a.b2cLoginButton, [data-login-page]", timeout=10000)
             await page.wait_for_load_state("networkidle")
-            await page.screenshot(path=str(SCREENSHOT_DIR / "03_after_login.png"))
+            await page.screenshot(path=str(SCREENSHOT_DIR / "02_b2c_page.png"))
+            print(f"   Redirected to: {page.url}")
+
+            # Azure AD B2C standard field IDs
+            print("-> Filling username on B2C page...")
+            await page.fill("#signInName", username, timeout=15000)
+            await page.fill("#password", password, timeout=10000)
+            await page.screenshot(path=str(SCREENSHOT_DIR / "03_b2c_filled.png"))
+
+            print("-> Submitting B2C login...")
+            await page.click("#next, button[type='submit']", timeout=10000)
+            await page.wait_for_load_state("networkidle")
+            await page.screenshot(path=str(SCREENSHOT_DIR / "04_after_login.png"))
             print(f"   URL after login: {page.url}")
 
         except Exception:
@@ -129,12 +71,12 @@ async def fetch_pdf() -> Path:
             "https://www.firstenergycorp.com/my_account/billing_payments.html",
             wait_until="networkidle",
         )
-        await page.screenshot(path=str(SCREENSHOT_DIR / "04_billing.png"))
+        await page.screenshot(path=str(SCREENSHOT_DIR / "05_billing.png"))
         print(f"   URL: {page.url}")
 
         # Step 3: Find and download the bill PDF
         print("-> Looking for bill PDF download link...")
-        await page.screenshot(path=str(SCREENSHOT_DIR / "05_bill_section.png"))
+        await page.screenshot(path=str(SCREENSHOT_DIR / "06_bill_section.png"))
 
         pdf_path = DOWNLOAD_DIR / "latest_bill.pdf"
         download_selectors = [
