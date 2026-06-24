@@ -57,7 +57,7 @@
   .chart-box h3 { font-size:.86rem; font-weight:600; color:var(--text2); margin-bottom:12px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:6px; }
   .chart-box svg { display:block; width:100%; overflow:visible; }
   .full-chart { background:var(--surface); border-radius:12px; padding:20px; box-shadow:var(--shadow); margin-bottom:20px; }
-  .full-chart h3 { font-size:.86rem; font-weight:600; color:var(--text2); margin-bottom:10px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:6px; }
+  .full-chart h3 { font-size:.86rem; font-weight:600; color:var(--text2); margin-bottom:6px; min-height:2.4rem; display:flex; align-items:center; }
   .full-chart svg { display:block; width:100%; overflow:visible; }
   .tbox { background:var(--surface); border-radius:12px; padding:20px; box-shadow:var(--shadow); overflow-x:auto; }
   .tbox h3 { font-size:.86rem; font-weight:600; color:var(--text2); margin-bottom:12px; }
@@ -168,24 +168,13 @@
 
     <div class="charts">
       <div class="full-chart" style="margin-bottom:0">
-        <h3>KWH Usage vs Avg Temperature (°F)
-          <span style="font-size:.75rem;font-weight:400;color:var(--text3);white-space:nowrap;">
-            <span style="display:inline-block;width:10px;height:10px;background:#63b3ed;border-radius:2px;margin-right:4px;"></span>KWH Usage &nbsp;
-            <svg width="18" height="10" style="vertical-align:middle;margin-right:4px;"><line x1="0" y1="5" x2="18" y2="5" stroke="#e53e3e" stroke-width="2" stroke-dasharray="4,2"/><circle cx="9" cy="5" r="3" fill="#e53e3e"/></svg>Avg Temp °F
-          </span>
-        </h3>
-        <svg id="lineSvg" height="240"></svg>
+        <h3>KWH Usage vs Avg Temperature (°F)</h3>
+        <svg id="lineSvg" height="260"></svg>
       </div>
 
       <div class="full-chart" style="margin-bottom:0">
-        <h3>On-Peak vs Off-Peak KWH by Month
-          <span style="font-size:.75rem;font-weight:400;color:var(--text3);white-space:nowrap;">
-            <span style="display:inline-block;width:10px;height:10px;background:#e53e3e;border-radius:2px;margin-right:4px;"></span>On-Peak &nbsp;
-            <span style="display:inline-block;width:10px;height:10px;background:#38a169;border-radius:2px;margin-right:4px;"></span>Off-Peak &nbsp;
-            <span style="display:inline-block;width:10px;height:10px;background:#63b3ed;border-radius:2px;margin-right:4px;"></span>Standard Rate
-          </span>
-        </h3>
-        <svg id="stackedSvg" height="220"></svg>
+        <h3>On-Peak vs Off-Peak KWH by Month</h3>
+        <svg id="stackedSvg" height="260"></svg>
       </div>
     </div>
 
@@ -390,70 +379,88 @@ function renderLineSvg() {
   const dark = document.body.classList.contains('dark');
   const svg = document.getElementById('lineSvg');
   const W = svg.parentElement.clientWidth - 40;
-  const H=240, PAD_T=28, LABEL_H=30, plotH=H-PAD_T-LABEL_H;
+  // H=260, PAD_T=50, LABEL_H=30 → plotH=180, bars y=50..230, months y=244
+  const H=260, PAD_T=50, LABEL_H=30, plotH=H-PAD_T-LABEL_H;
   svg.setAttribute('width',W); svg.setAttribute('height',H);
   const n=fd.length;
   if(!n){svg.innerHTML='';return;}
   const maxK=Math.max(...fd.map(d=>d.kwh));
   const minT=Math.min(...fd.map(d=>d.temp)), maxT=Math.max(...fd.map(d=>d.temp));
   const yTemp=v=>PAD_T+plotH-((v-minT)/(maxT-minT||1))*plotH;
-  // Same bar geometry as the stacked chart so months line up
   const gapR=0.22, stepW=(W-16)/n, barW=stepW*(1-gapR);
   const valCol=dark?'#a0aec0':'#4a5568', lblCol='#718096';
-  let bars='', tempPath='', tempDots='', lbls='', dataLabels='';
+  // Single group so all legend elements share the same coordinate origin — no vertical drift possible
+  const legend=`<g transform="translate(8,10)">
+    <rect x="0" y="0" width="10" height="10" fill="#63b3ed" rx="2"/>
+    <text x="14" y="5" dominant-baseline="middle" font-size="10" fill="${lblCol}">KWH Usage</text>
+    <line x1="92" y1="5" x2="112" y2="5" stroke="#e53e3e" stroke-width="2" stroke-dasharray="4,2"/>
+    <circle cx="102" cy="5" r="3" fill="#e53e3e"/>
+    <text x="116" y="5" dominant-baseline="middle" font-size="10" fill="${lblCol}">Avg Temp °F</text>
+  </g>`;
+  let bars='', tempPath='', tempDots='', tempTxt='', barVals='', monthLbls='';
   fd.forEach((d,i)=>{
     const x=8+i*stepW+stepW*gapR/2, cx=(x+barW/2).toFixed(1);
     const bh=(d.kwh/maxK)*plotH, by=PAD_T+plotH-bh;
     const oi=ALL.indexOf(d), isActive=oi===activeIdx;
     bars+=`<rect x="${x.toFixed(1)}" y="${by.toFixed(1)}" width="${barW.toFixed(1)}" height="${bh.toFixed(1)}" fill="${isActive?'#1a5276':'#63b3ed'}" rx="3" opacity="${isActive?1:0.85}" style="cursor:pointer" onclick="showDetail(${oi})"><title>${d.label}: ${d.kwh.toLocaleString()} KWH, ${d.temp}°F</title></rect>`;
-    dataLabels+=`<text x="${cx}" y="${(by-4).toFixed(1)}" text-anchor="middle" font-size="8.5" font-weight="700" fill="${valCol}">${d.kwh.toLocaleString()}</text>`;
     const tx=+cx, ty=yTemp(d.temp);
     tempPath+=(i===0?'M':'L')+`${tx.toFixed(1)},${ty.toFixed(1)} `;
     tempDots+=`<circle cx="${tx.toFixed(1)}" cy="${ty.toFixed(1)}" r="4" fill="#e53e3e" stroke="${dark?'#1a1f2e':'white'}" stroke-width="1.5"><title>${d.label}: ${d.temp}°F</title></circle>`;
-    const tText=d.temp+'°', tLabelY=ty>PAD_T+18?ty-9:ty+17;
-    dataLabels+=`<rect x="${(tx-tText.length*3).toFixed(1)}" y="${(tLabelY-10).toFixed(1)}" width="${(tText.length*6+4).toFixed(1)}" height="12" rx="2" fill="${dark?'#1a1f2e':'white'}" fill-opacity="0.88"/>`;
-    dataLabels+=`<text x="${tx.toFixed(1)}" y="${tLabelY.toFixed(1)}" text-anchor="middle" font-size="8" font-weight="700" fill="#e53e3e">${tText}</text>`;
-    lbls+=`<text x="${cx}" y="${H-6}" text-anchor="middle" font-size="9" fill="${lblCol}">${d.label}</text>`;
+    const barValY=by-5;
+    // Place temp label above dot; if that would overlap the bar value, move it below the dot instead
+    let tLabelY = ty>PAD_T+15 ? ty-9 : ty+16;
+    if(Math.abs(tLabelY-barValY)<14) tLabelY=ty+16;
+    tempTxt+=`<text x="${tx.toFixed(1)}" y="${tLabelY.toFixed(1)}" text-anchor="middle" font-size="8" font-weight="700" fill="#e53e3e">${d.temp}°</text>`;
+    barVals+=`<text x="${cx}" y="${barValY.toFixed(1)}" text-anchor="middle" font-size="8.5" font-weight="700" fill="${valCol}">${d.kwh.toLocaleString()}</text>`;
+    monthLbls+=`<text x="${cx}" y="${(H-LABEL_H+14).toFixed(1)}" text-anchor="middle" font-size="9" fill="${lblCol}">${d.label}</text>`;
   });
-  svg.innerHTML=`${bars}
-    <path d="${tempPath}" fill="none" stroke="#e53e3e" stroke-width="2.2" stroke-linejoin="round" stroke-dasharray="5,3"/>
-    ${tempDots}${dataLabels}${lbls}`;
+  // Layer order: legend → bars → temp line → temp dots → temp °F labels → KWH values → month labels
+  svg.innerHTML=`${legend}${bars}<path d="${tempPath}" fill="none" stroke="#e53e3e" stroke-width="2.2" stroke-linejoin="round" stroke-dasharray="5,3"/>${tempDots}${tempTxt}${barVals}${monthLbls}`;
 }
 
 function renderStackedBar() {
   const dark = document.body.classList.contains('dark');
   const svg = document.getElementById('stackedSvg');
   const W = svg.parentElement.clientWidth - 40;
-  const H=220, PAD_T=24, LABEL_H=30, barH=H-PAD_T-LABEL_H;
+  // H=260, PAD_T=50, LABEL_H=30 → barH=180, bars y=50..230, months y=244 (matches lineSvg)
+  const H=260, PAD_T=50, LABEL_H=30, barH=H-PAD_T-LABEL_H;
+  svg.setAttribute('width',W); svg.setAttribute('height',H);
   const n=fd.length;
   if(!n){svg.innerHTML='';return;}
   const max=Math.max(...fd.map(d=>d.kwh));
   const gapR=0.22, stepW=(W-16)/n, barW=stepW*(1-gapR);
-  svg.setAttribute('width',W); svg.setAttribute('height',H);
   const valCol=dark?'#a0aec0':'#4a5568', lblCol='#718096';
-  let html='';
+  const legend=`<g transform="translate(8,10)">
+    <rect x="0" y="0" width="10" height="10" fill="#e53e3e" rx="2"/>
+    <text x="14" y="5" dominant-baseline="middle" font-size="10" fill="${lblCol}">On-Peak</text>
+    <rect x="74" y="0" width="10" height="10" fill="#38a169" rx="2"/>
+    <text x="88" y="5" dominant-baseline="middle" font-size="10" fill="${lblCol}">Off-Peak</text>
+    <rect x="148" y="0" width="10" height="10" fill="#63b3ed" rx="2"/>
+    <text x="162" y="5" dominant-baseline="middle" font-size="10" fill="${lblCol}">Standard Rate</text>
+  </g>`;
+  let bars='', barVals='', monthLbls='';
   fd.forEach((d,i)=>{
     const x=8+i*stepW+stepW*gapR/2, cx=(x+barW/2).toFixed(1);
     const origIdx=ALL.indexOf(d), isActive=origIdx===activeIdx, opacity=isActive?1:0.85;
     if(d.onPeak!==null){
       const offH=(d.offPeak/max)*barH, onH=(d.onPeak/max)*barH;
       const offY=PAD_T+barH-offH, onY=offY-onH;
-      html+=`<g style="cursor:pointer" onclick="showDetail(${origIdx})">
+      bars+=`<g style="cursor:pointer" onclick="showDetail(${origIdx})">
         <rect x="${x.toFixed(1)}" y="${offY.toFixed(1)}" width="${barW.toFixed(1)}" height="${offH.toFixed(1)}" fill="#38a169" opacity="${opacity}"><title>${d.label} Off-Peak: ${d.offPeak.toLocaleString()} KWH (${d.offPct}%)</title></rect>
         <rect x="${x.toFixed(1)}" y="${onY.toFixed(1)}" width="${barW.toFixed(1)}" height="${onH.toFixed(1)}" fill="#e53e3e" rx="3" opacity="${opacity}"><title>${d.label} On-Peak: ${d.onPeak.toLocaleString()} KWH (${d.onPct}%)</title></rect>
-        <text x="${cx}" y="${(onY-4).toFixed(1)}" text-anchor="middle" font-size="8.5" font-weight="700" fill="${valCol}">${d.kwh.toLocaleString()}</text>
-        <text x="${cx}" y="${(H-LABEL_H+14).toFixed(1)}" text-anchor="middle" font-size="9" fill="${lblCol}">${d.label}</text>
       </g>`;
+      barVals+=`<text x="${cx}" y="${(onY-5).toFixed(1)}" text-anchor="middle" font-size="8.5" font-weight="700" fill="${valCol}">${d.kwh.toLocaleString()}</text>`;
     } else {
-      const bh=(d.kwh/max)*barH, y=PAD_T+barH-bh;
-      html+=`<g style="cursor:pointer" onclick="showDetail(${origIdx})">
-        <rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${bh.toFixed(1)}" fill="#63b3ed" rx="3" opacity="${opacity}"><title>${d.label}: ${d.kwh.toLocaleString()} KWH (Standard Rate)</title></rect>
-        <text x="${cx}" y="${(y-4).toFixed(1)}" text-anchor="middle" font-size="8.5" font-weight="700" fill="${valCol}">${d.kwh.toLocaleString()}</text>
-        <text x="${cx}" y="${(H-LABEL_H+14).toFixed(1)}" text-anchor="middle" font-size="9" fill="${lblCol}">${d.label}</text>
+      const bh=(d.kwh/max)*barH, by=PAD_T+barH-bh;
+      bars+=`<g style="cursor:pointer" onclick="showDetail(${origIdx})">
+        <rect x="${x.toFixed(1)}" y="${by.toFixed(1)}" width="${barW.toFixed(1)}" height="${bh.toFixed(1)}" fill="#63b3ed" rx="3" opacity="${opacity}"><title>${d.label}: ${d.kwh.toLocaleString()} KWH (Standard Rate)</title></rect>
       </g>`;
+      barVals+=`<text x="${cx}" y="${(by-5).toFixed(1)}" text-anchor="middle" font-size="8.5" font-weight="700" fill="${valCol}">${d.kwh.toLocaleString()}</text>`;
     }
+    monthLbls+=`<text x="${cx}" y="${(H-LABEL_H+14).toFixed(1)}" text-anchor="middle" font-size="9" fill="${lblCol}">${d.label}</text>`;
   });
-  svg.innerHTML=html;
+  // Layer order: legend → bars → bar KWH values → month labels
+  svg.innerHTML=`${legend}${bars}${barVals}${monthLbls}`;
 }
 
 function renderTable() {
