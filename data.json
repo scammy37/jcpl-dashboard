@@ -7,9 +7,8 @@
   {"label":"Nov 25","period":"Nov 06–Dec 04, 2025","days":29,"kwh":1521,"cost":283.62,"temp":45,"rate":"Time-of-Day","onPeak":198,"offPeak":1323,"onPct":13.0,"offPct":87.0},
   {"label":"Dec 25","period":"Dec 05–Jan 05, 2026","days":32,"kwh":1954,"cost":342.02,"temp":33,"rate":"Time-of-Day","onPeak":293,"offPeak":1661,"onPct":15.0,"offPct":85.0},
   {"label":"Jan 26","period":"Jan 06–Feb 03, 2026","days":29,"kwh":2237,"cost":391.36,"temp":30,"rate":"Time-of-Day","onPeak":361,"offPeak":1876,"onPct":16.1,"offPct":83.9},
-  {"label":"Feb 26","period":"Feb 04–Mar 04, 2026","days":29,"kwh":1605,"cost":284.2,"temp":33,"rate":"Time-of-Day","onPeak":317,"offPeak":1288,"onPct":19.8,"offPct":80.2},
+  {"label":"Feb 26","period":"Feb 04–Mar 04, 2026","days":29,"kwh":1605,"cost":284.20,"temp":33,"rate":"Time-of-Day","onPeak":317,"offPeak":1288,"onPct":19.8,"offPct":80.2},
   {"label":"Mar 26","period":"Mar 05–Apr 02, 2026","days":29,"kwh":1415,"cost":261.74,"temp":50,"rate":"Time-of-Day","onPeak":261,"offPeak":1154,"onPct":18.4,"offPct":81.6},
   {"label":"Apr 26","period":"Apr 03–May 04, 2026","days":32,"kwh":1618,"cost":298.73,"temp":56,"rate":"Time-of-Day","onPeak":305,"offPeak":1313,"onPct":18.9,"offPct":81.1},
-  {"label":"May 26","period":"May 05–Jun 03, 2026","days":30,"kwh":1717,"cost":312.3,"temp":66,"rate":"Time-of-Day","onPeak":331,"offPeak":1386,"onPct":19.3,"offPct":80.7},
-  {"label":"Jun 26","period":"May 05–Jun 03, 2026","days":30,"kwh":1717,"cost":312.3,"temp":66,"rate":"Time-of-Day","onPeak":331,"offPeak":1386,"onPct":19.3,"offPct":80.7}
+  {"label":"May 26","period":"May 05–Jun 03, 2026","days":30,"kwh":1717,"cost":312.30,"temp":66,"rate":"Time-of-Day","onPeak":331,"offPeak":1386,"onPct":19.3,"offPct":80.7}
 ]

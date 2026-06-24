@@ -222,8 +222,9 @@ def parse_pdf(pdf_path: Path) -> dict:
     end_str   = m.group(2)
     days      = int(m.group(3))
 
-    end_m = re.match(r"(\w+) \d+, (\d{4})", end_str)
-    label  = f"{end_m.group(1)} {end_m.group(2)[2:]}"
+    end_m  = re.match(r"(\w+) \d+, (\d{4})", end_str)
+    start_m = re.match(r"(\w+)", start_str)
+    label  = f"{start_m.group(1)} {end_m.group(2)[2:]}"   # start month + 2-digit year
     period = f"{start_str}–{end_str}"
 
     m   = re.search(r"KWH used\s+([\d,]+)", text)
@@ -271,15 +272,13 @@ def update_data_json(entry: dict) -> bool:
         print(f"Entry for {entry['label']} already exists — skipping.")
         return False
 
-    bills.append(entry)
-    lines = ["["]
-    for i, bill in enumerate(bills):
-        comma = "," if i < len(bills) - 1 else ""
-        lines.append("  " + json.dumps(bill, separators=(",", ":"), ensure_ascii=False) + comma)
-    lines.append("]")
-
-    with open(DATA_PATH, "w", encoding="utf-8") as f:
-        f.write("\n".join(lines) + "\n")
+    # Append the new entry without rewriting existing lines (preserves their formatting)
+    new_line = "  " + json.dumps(entry, separators=(",", ":"), ensure_ascii=False)
+    raw = DATA_PATH.read_text(encoding="utf-8").rstrip()
+    # raw ends with "}" then newline then "]" — insert before the closing bracket
+    assert raw.endswith("]"), "Unexpected data.json format"
+    updated = raw[:-1].rstrip() + ",\n" + new_line + "\n]\n"
+    DATA_PATH.write_text(updated, encoding="utf-8")
 
     print(f"Added {entry['label']} to data.json")
     return True
