@@ -213,7 +213,7 @@ def parse_pdf(pdf_path: Path) -> dict:
     print(f"--- PDF text (first 800 chars) ---\n{text[:800]}\n---")
 
     m = re.search(
-        r"Billing Period:\s+(\w+ \d{2}) to (\w+ \d{2}, \d{4}) for (\d+) days", text
+        r"Billing Period:\s*(\w+ \d{2}) to (\w+ \d{2}, \d{4}) for (\d+) days", text
     )
     if not m:
         raise ValueError("Could not find billing period in PDF — check the PDF format.")
@@ -239,12 +239,12 @@ def parse_pdf(pdf_path: Path) -> dict:
         m = re.search(r"OnPeak KWH Used \(([\d.]+)%\)\s+(\d+)", text)
         if m:
             on_pct, on_peak = float(m.group(1)), int(m.group(2))
-        m = re.search(r"OffPeak KWH Used \(([\d.]+)%\)\s+(\d+)", text)
+        m = re.search(r"OffPeak KWH Used \(([\d.]+)%\)\s+([\d,]+)", text)
         if m:
-            off_pct, off_peak = float(m.group(1)), int(m.group(2))
+            off_pct, off_peak = float(m.group(1)), int(m.group(2).replace(",", ""))
 
     temp = None
-    m = re.search(r"Average Daily Temperature[\s\S]{0,300}?This Year\s+\d+\s+(\d+)", text)
+    m = re.search(r"Average Daily Temperature\s+\d+\s+(\d+)", text)
     if m:
         temp = int(m.group(1))
 
