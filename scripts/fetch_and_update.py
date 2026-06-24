@@ -288,7 +288,14 @@ async def main():
     pdf_path = await fetch_pdf()
     entry = parse_pdf(pdf_path)
     print(f"\nParsed entry:\n{json.dumps(entry, indent=2)}")
-    update_data_json(entry)
+    added = update_data_json(entry)
+
+    if added:
+        result = f"NEW bill added: {entry['label']} | {entry['kwh']} KWH | ${entry['cost']:.2f}"
+    else:
+        result = f"No update: {entry['label']} already in dashboard"
+    (ROOT / "bill_result.txt").write_text(result, encoding="utf-8")
+    print(result)
 
 
 if __name__ == "__main__":

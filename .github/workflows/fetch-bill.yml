@@ -60,3 +60,32 @@ jobs:
           else
             echo "No new data to commit."
           fi
+
+      - name: Read bill result
+        if: always()
+        id: result
+        run: |
+          if [ -f bill_result.txt ]; then
+            echo "message=$(cat bill_result.txt)" >> $GITHUB_OUTPUT
+          else
+            echo "message=Script failed before completing — check the run log" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Send email notification
+        if: always()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: michael.zagame@gmail.com
+          password: ${{ secrets.GMAIL_APP_PASSWORD }}
+          subject: "JCP&L Bill Check – ${{ steps.result.outputs.message }}"
+          to: michael.zagame@gmail.com
+          from: JCP&L Dashboard <michael.zagame@gmail.com>
+          body: |
+            JCP&L daily bill check — ${{ github.run_started_at }}
+
+            Result: ${{ steps.result.outputs.message }}
+
+            Full run log: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
