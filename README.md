@@ -101,9 +101,11 @@ The dashboard uses `fetch('data.json')` which requires a local server (browsers 
 
 ```bash
 cd jcpl-dashboard
-python -m http.server 8080
+python serve.py
 # Open http://localhost:8080
 ```
+
+`serve.py` reads the `PORT` environment variable so it also works with the Claude Code preview pane automatically.
 
 Or use the [Live Server](https://marketplace.visualstudio.com/items?itemName=ritwickdey.LiveServer) VS Code extension.
 
