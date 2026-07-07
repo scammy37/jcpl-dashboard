@@ -38,7 +38,7 @@
 <header>
   <div>
     <h1>📄 Add New Bill</h1>
-    <p style="opacity:.75;font-size:.8rem;margin-top:3px;">Four options — auto-fetch runs automatically every month</p>
+    <p style="opacity:.75;font-size:.8rem;margin-top:3px;">Three options — all manual, no automated login required</p>
   </div>
   <a href="index.html" class="hbtn">← Back to Dashboard</a>
 </header>
@@ -54,7 +54,7 @@
     <div style="background:var(--surface); border-radius:0 0 14px 14px; padding:24px 28px; box-shadow:var(--shadow); border-top:1px solid var(--border); margin-top:-6px;">
 
       <p style="font-size:.83rem;color:var(--text3);margin-bottom:20px;line-height:1.6;">
-        Options A, B, and D work from any browser with no setup. Only Option C (the script) requires the repo cloned locally with Python installed. Follow these steps once per machine.
+        Options A and B work from any browser with no setup. Only Option C (the script) requires the repo cloned locally with Python installed. Follow these steps once per machine.
       </p>
 
       <div style="font-size:.82rem;font-weight:700;color:var(--text2);margin-bottom:12px;">Step 1 — Install Git (if not already installed)</div>
@@ -98,17 +98,17 @@
     </div>
   </details>
 
-  <!-- Option A: Auto-fetch -->
+  <!-- Option A: Drop PDF + ask Claude -->
   <div class="card" style="border-left:4px solid var(--green);">
-    <h2>🤖 Option A — Auto-Fetch <span class="auto-badge">Automatic</span></h2>
-    <p>A GitHub Actions workflow runs automatically from the 7th–12th of each month. It logs in to firstenergycorp.com using your saved browser cookies, downloads the latest bill PDF, parses it, and adds the entry to <code>data.json</code> — no action needed from you.</p>
+    <h2>📥 Option A — Drop the PDF + Ask Claude <span class="auto-badge">Easiest</span></h2>
+    <p>No login automation involved — you save the bill PDF yourself once a month, upload it to the repo, and ask Claude to do the rest.</p>
     <div class="steps">
-      <div style="font-size:.82rem;font-weight:700;color:var(--text2);margin-bottom:10px;">You'll receive an email at michael.zagame@gmail.com with one of these results:</div>
-      <div class="step"><div class="step-num" style="background:var(--green);">✓</div><div><strong>New bill added</strong> — entry was parsed and pushed to the dashboard automatically</div></div>
-      <div class="step"><div class="step-num" style="background:var(--red);">!</div><div><strong>Session cookies expired</strong> — log in to firstenergycorp.com in Chrome, open DevTools → Network, right-click any request → Copy as cURL, extract the <code>Cookie:</code> header, and update the <code>JCPL_COOKIES</code> secret at <strong>github.com/scammy37/jcpl-dashboard/settings/secrets/actions</strong></div></div>
-      <div class="step"><div class="step-num" style="background:var(--red);">!</div><div><strong>Any other failure</strong> — check the Actions run log and fall back to Option B, C, or D below</div></div>
+      <div class="step"><div class="step-num">1</div><div>Download the latest bill PDF from <strong>firstenergycorp.com</strong> (My Account → Billing → View Bill)</div></div>
+      <div class="step"><div class="step-num">2</div><div>Go to <a href="https://github.com/scammy37/jcpl-dashboard/upload/main/incoming" target="_blank" style="color:var(--accent);">github.com/scammy37/jcpl-dashboard → incoming/</a> and upload the PDF (works from the GitHub mobile app or any browser — no computer needed)</div></div>
+      <div class="step"><div class="step-num">3</div><div>Message Claude (a Claude Code session with access to this repo): <strong>"process the new bill"</strong></div></div>
+      <div class="step"><div class="step-num">4</div><div>Claude parses the PDF, adds the entry to <code>data.json</code>, commits, and deletes the processed PDF — reload the dashboard in ~1 minute</div></div>
     </div>
-    <div class="tip">💡 You can also trigger the workflow manually: go to <strong>github.com/scammy37/jcpl-dashboard/actions</strong> → <strong>Fetch JCP&L Bill</strong> → <strong>Run workflow</strong>.</div>
+    <div class="tip">💡 If Claude can't run the parser for some reason, it can still read the PDF directly and hand you the JSON — fall back to Option B below.</div>
   </div>
 
   <!-- Option B: Claude -->
@@ -155,27 +155,17 @@ Rules:
   <!-- Option C: Script (home PC only) -->
   <div class="card">
     <h2>⚡ Option C — Run the Script <span class="auto-badge" style="background:#e9d8fd;color:#553c9a;">Home PC only</span></h2>
-    <p>Fastest when you're at your home PC. Get the JSON from Claude (Option B), then run <code>add_bill.py</code> — it updates <code>data.json</code>, commits, and pushes in one step.</p>
+    <p>Fastest when you're at your home PC. Two ways to do it, both update <code>data.json</code>, commit, and push in one step:</p>
     <div class="steps">
+      <div style="font-size:.82rem;font-weight:700;color:var(--text2);margin-bottom:10px;">Straight from the PDF (no Claude needed):</div>
+      <div class="step"><div class="step-num">1</div><div>Open PowerShell in <code>C:\Claude\jcpl-dashboard</code> (right-click folder → <strong>Open in Terminal</strong>)</div></div>
+      <div class="step"><div class="step-num">2</div><div>Run: <code>python scripts/process_bill.py path\to\bill.pdf</code></div></div>
+    </div>
+    <div class="steps" style="margin-top:16px;">
+      <div style="font-size:.82rem;font-weight:700;color:var(--text2);margin-bottom:10px;">Or from Claude's JSON (Option B):</div>
       <div class="step"><div class="step-num">1</div><div>Get the JSON entry from Claude using the Option B prompt</div></div>
-      <div class="step"><div class="step-num">2</div><div>Open PowerShell in <code>C:\Claude\jcpl-dashboard</code> (right-click folder → <strong>Open in Terminal</strong>)</div></div>
-      <div class="step"><div class="step-num">3</div><div>Run: <code>python add_bill.py</code> — paste the JSON and press Enter twice</div></div>
-      <div class="step"><div class="step-num">4</div><div>Review the values, press <strong>Y</strong> to commit and push — done</div></div>
-    </div>
-    <div class="tip">💡 You can also pass the JSON as a direct argument:<br>
-      <code>python add_bill.py '{"label":"Jun 26","period":"Jun 04–Jul 03, 2026",...}'</code>
-    </div>
-  </div>
-
-  <!-- Option D: GitHub web editor -->
-  <div class="card">
-    <h2>🌐 Option D — Edit on GitHub Directly <span class="auto-badge" style="background:#bee3f8;color:#2b6cb0;">Any device</span></h2>
-    <p>Browser only — no Claude needed if you already have the JSON or want to type it in manually.</p>
-    <div class="steps">
-      <div class="step"><div class="step-num">1</div><div>Go to <a href="https://github.com/scammy37/jcpl-dashboard/blob/main/data.json" target="_blank" style="color:var(--accent);">github.com/scammy37/jcpl-dashboard → data.json</a></div></div>
-      <div class="step"><div class="step-num">2</div><div>Click the ✏️ pencil icon (Edit this file)</div></div>
-      <div class="step"><div class="step-num">3</div><div>Add a comma after the last <code>}</code>, paste your new entry before the closing <code>]</code></div></div>
-      <div class="step"><div class="step-num">4</div><div>Click <strong>Commit changes</strong> — GitHub Pages redeploys automatically within ~1 minute</div></div>
+      <div class="step"><div class="step-num">2</div><div>Run: <code>python add_bill.py</code> — paste the JSON and press Enter twice</div></div>
+      <div class="step"><div class="step-num">3</div><div>Review the values, press <strong>Y</strong> to commit and push — done</div></div>
     </div>
   </div>
 
