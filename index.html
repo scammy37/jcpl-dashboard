@@ -781,6 +781,12 @@ window.addEventListener('resize', renderAll);
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js');
+  let refreshed = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (refreshed) return;
+    refreshed = true;
+    location.reload();
+  });
 }
 </script>
 </body>
