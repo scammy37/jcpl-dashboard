@@ -481,9 +481,11 @@ function renderLineSvg() {
     tempPath+=(i===0?'M':'L')+`${tx.toFixed(1)},${ty.toFixed(1)} `;
     tempDots+=`<circle cx="${tx.toFixed(1)}" cy="${ty.toFixed(1)}" r="4" fill="#e53e3e" stroke="${dark?'#1a1f2e':'white'}" stroke-width="1.5"><title>${d.label}: ${d.temp}°F</title></circle>`;
     const barValY=by-5;
-    // Place temp label above dot; if that would overlap the bar value, move it below the dot instead
-    let tLabelY = ty>PAD_T+15 ? ty-9 : ty+16;
-    if(Math.abs(tLabelY-barValY)<14) tLabelY=ty+16;
+    // Place temp label above dot; if that would overlap the bar value, flip to below the dot (or vice versa)
+    const tAbove=ty-9, tBelow=ty+16;
+    let tLabelY = ty>PAD_T+15 ? tAbove : tBelow;
+    if(Math.abs(tLabelY-barValY)<14) tLabelY = tLabelY===tAbove ? tBelow : tAbove;
+    if(Math.abs(tLabelY-barValY)<14) tLabelY = tLabelY>barValY ? barValY+14 : barValY-14;
     tempTxt+=`<text x="${tx.toFixed(1)}" y="${tLabelY.toFixed(1)}" text-anchor="middle" font-size="8" font-weight="700" fill="#e53e3e">${d.temp}°</text>`;
     barVals+=`<text x="${cx}" y="${barValY.toFixed(1)}" text-anchor="middle" font-size="8.5" font-weight="700" fill="${valCol}">${d.kwh.toLocaleString()}</text>`;
     monthLbls+=`<text x="${cx}" y="${(H-LABEL_H+14).toFixed(1)}" text-anchor="middle" font-size="9" fill="${lblCol}">${d.label}</text>`;
