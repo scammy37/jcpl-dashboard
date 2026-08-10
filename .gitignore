@@ -1,0 +1,5 @@
+# Claude Code local tooling (machine-specific paths and permissions)
+.claude/
+
+# Local scratch/preview pages - not site content, would publish to Pages
+test-features.html
