@@ -1,4 +1,4 @@
-const CACHE = 'jcpl-v4';
+const CACHE = 'jcpl-v5';
 const STATIC = ['./index.html', './extract.html', './icon.svg', './manifest.json'];
 
 // Install: cache static files
