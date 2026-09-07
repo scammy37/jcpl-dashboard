@@ -12,5 +12,6 @@
   {"label":"Apr 26","period":"Apr 03–May 04, 2026","days":32,"kwh":1618,"cost":298.73,"temp":56,"rate":"Time-of-Day","onPeak":305,"offPeak":1313,"onPct":18.9,"offPct":81.1},
   {"label":"May 26","period":"May 05–Jun 03, 2026","days":30,"kwh":1717,"cost":312.3,"temp":66,"rate":"Time-of-Day","onPeak":331,"offPeak":1386,"onPct":19.3,"offPct":80.7},
   {"label":"Jun 26","period":"Jun 04–Jul 06, 2026","days":33,"kwh":1925,"cost":352.76,"temp":78,"rate":"Time-of-Day","onPeak":383,"offPeak":1542,"onPct":19.9,"offPct":80.1},
-  {"label":"Jul 26","period":"Jul 07–Aug 04, 2026","days":29,"kwh":1489,"cost":276.85,"temp":77,"rate":"Time-of-Day","onPeak":503,"offPeak":986,"onPct":33.8,"offPct":66.2}
+  {"label":"Jul 26","period":"Jul 07–Aug 04, 2026","days":29,"kwh":1489,"cost":276.85,"temp":77,"rate":"Time-of-Day","onPeak":503,"offPeak":986,"onPct":33.8,"offPct":66.2},
+  {"label":"Aug 26","period":"Aug 05–Sep 03, 2026","days":30,"kwh":2143,"cost":400.57,"temp":77,"rate":"Time-of-Day","onPeak":459,"offPeak":1684,"onPct":21.4,"offPct":78.6}
 ]
