@@ -480,12 +480,20 @@ function renderLineSvg() {
     const tx=+cx, ty=yTemp(d.temp);
     tempPath+=(i===0?'M':'L')+`${tx.toFixed(1)},${ty.toFixed(1)} `;
     tempDots+=`<circle cx="${tx.toFixed(1)}" cy="${ty.toFixed(1)}" r="4" fill="#e53e3e" stroke="${dark?'#1a1f2e':'white'}" stroke-width="1.5"><title>${d.label}: ${d.temp}°F</title></circle>`;
-    const barValY=by-5;
-    // Place temp label above dot; if that would overlap the bar value, flip to below the dot (or vice versa)
-    const tAbove=ty-9, tBelow=ty+16;
-    let tLabelY = ty>PAD_T+15 ? tAbove : tBelow;
-    if(Math.abs(tLabelY-barValY)<14) tLabelY = tLabelY===tAbove ? tBelow : tAbove;
-    if(Math.abs(tLabelY-barValY)<14) tLabelY = tLabelY>barValY ? barValY+14 : barValY-14;
+    let barValY=by-5, tLabelY;
+    // Bar value and temp dot share the same x, so when a tall bar meets a high temp
+    // (e.g. Jun 26) the KWH value lands on top of the dot/line. Lift the value clear
+    // of the dot and drop the temp label to the opposite side.
+    if(Math.abs(ty-barValY)<13){
+      barValY = ty-13;   // KWH value above the dot
+      tLabelY = ty+16;   // temp °F below the dot
+    } else {
+      // Place temp label above dot; if that would overlap the bar value, flip to below the dot (or vice versa)
+      const tAbove=ty-9, tBelow=ty+16;
+      tLabelY = ty>PAD_T+15 ? tAbove : tBelow;
+      if(Math.abs(tLabelY-barValY)<14) tLabelY = tLabelY===tAbove ? tBelow : tAbove;
+      if(Math.abs(tLabelY-barValY)<14) tLabelY = tLabelY>barValY ? barValY+14 : barValY-14;
+    }
     tempTxt+=`<text x="${tx.toFixed(1)}" y="${tLabelY.toFixed(1)}" text-anchor="middle" font-size="8" font-weight="700" fill="#e53e3e">${d.temp}°</text>`;
     barVals+=`<text x="${cx}" y="${barValY.toFixed(1)}" text-anchor="middle" font-size="8.5" font-weight="700" fill="${valCol}">${d.kwh.toLocaleString()}</text>`;
     monthLbls+=`<text x="${cx}" y="${(H-LABEL_H+14).toFixed(1)}" text-anchor="middle" font-size="9" fill="${lblCol}">${d.label}</text>`;
